@@ -15,13 +15,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, re_path
+from django.views.static import serve
+from django.conf import settings
 from pjapp import views
 from pjapp.views import FrontendAppView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/calculate/', views.CalculateView.as_view(), name='calculate'),
+    
+    # Serve static files directly
+    re_path(r'^assets/(?P<path>.*)$', serve, {'document_root': settings.BASE_DIR / 'frontend' / 'dist' / 'assets'}),
+    re_path(r'^(?P<path>.*\.svg)$', serve, {'document_root': settings.BASE_DIR / 'frontend' / 'dist'}),
+    
     # Catch-all for React frontend
     path('', FrontendAppView.as_view()),
 ]
