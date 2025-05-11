@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import './App.css';
 
+// Configure API base URL
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? ''  // In production, use relative paths
+  : 'http://localhost:8000';  // In development, use local server URL
+
 function App() {
   const [form, setForm] = useState({
     type: 'polar',
@@ -59,7 +64,7 @@ function App() {
     }
 
     try {
-      const response = await fetch('/api/calculate/', {
+      const response = await fetch(`${API_BASE_URL}/api/calculate/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
