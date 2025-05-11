@@ -8,6 +8,19 @@ from django.http import HttpResponse
 import os
 import math
 
+class FrontendAppView(View):
+    def get(self, request):
+        try:
+            with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend', 'dist', 'index.html')) as f:
+                return HttpResponse(f.read())
+        except FileNotFoundError:
+            return HttpResponse(
+                """
+                index.html not found! Build your React app!!
+                """,
+                status=501,
+            )
+
 def calculate_polar(distance, use_azimuth, degrees, minutes, seconds, angle):
     """
     Calculate ΔE and ΔN from distance and direction
