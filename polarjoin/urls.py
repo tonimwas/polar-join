@@ -27,7 +27,7 @@ urlpatterns = [
     
     # Serve static files directly
     re_path(r'^assets/(?P<path>.*)$', serve, {'document_root': settings.BASE_DIR / 'frontend' / 'dist' / 'assets'}),
-    re_path(r'^(?P<path>.*\.svg)$', serve, {'document_root': settings.BASE_DIR / 'frontend' / 'dist'}),
+    re_path(r'^(?P<path>.*\.(svg|js|css|png|jpg|jpeg|gif|ico))$', serve, {'document_root': settings.BASE_DIR / 'frontend' / 'dist'}),
     
     # Catch-all for React frontend
     path('', FrontendAppView.as_view()),

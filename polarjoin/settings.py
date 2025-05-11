@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-f=a_5pfu3v6ol&0fgo5=%fwnbl4%!6gyox438a-&bvi$%2mvk-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['polar-join-11c06a97be59.herokuapp.com', 'localhost', '127.0.0.1']
 
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = True
