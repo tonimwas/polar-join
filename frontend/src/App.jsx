@@ -35,24 +35,26 @@ function App() {
     setError(null);
 
     // Validate required fields
-    if (!form.distance) {
+    if (form.type === 'polar' && !form.distance) {
       setError('Please enter a distance');
       return;
     }
 
-    if (form.useAzimuth) {
-      if (
-        form.degrees === '' || form.degrees === null ||
-        form.minutes === '' || form.minutes === null ||
-        form.seconds === '' || form.seconds === null
-      ) {
-        setError('Please enter all DMS values (Degrees, Minutes, Seconds)');
-        return;
-      }
-    } else {
-      if (!form.angle) {
-        setError('Please enter an angle from East');
-        return;
+    if (form.type === 'polar') {
+      if (form.useAzimuth) {
+        if (
+          form.degrees === '' || form.degrees === null ||
+          form.minutes === '' || form.minutes === null ||
+          form.seconds === '' || form.seconds === null
+        ) {
+          setError('Please enter all DMS values (Degrees, Minutes, Seconds)');
+          return;
+        }
+      } else {
+        if (!form.angle) {
+          setError('Please enter an angle from East');
+          return;
+        }
       }
     }
 
@@ -213,53 +215,57 @@ function App() {
 
         {form.type === 'join' && (
           <>
-            <div className="form-group">
-              <label htmlFor="ea">EA:</label>
-              <input
-                type="number"
-                id="ea"
-                name="ea"
-                value={form.ea}
-                onChange={handleChange}
-                step="any"
-                required
-              />
+            <div className="form-group join-pair">
+              <div>
+                <label htmlFor="ea">EA:</label>
+                <input
+                  type="number"
+                  id="ea"
+                  name="ea"
+                  value={form.ea}
+                  onChange={handleChange}
+                  step="any"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="na">NA:</label>
+                <input
+                  type="number"
+                  id="na"
+                  name="na"
+                  value={form.na}
+                  onChange={handleChange}
+                  step="any"
+                  required
+                />
+              </div>
             </div>
-            <div className="form-group">
-              <label htmlFor="na">NA:</label>
-              <input
-                type="number"
-                id="na"
-                name="na"
-                value={form.na}
-                onChange={handleChange}
-                step="any"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="eb">EB:</label>
-              <input
-                type="number"
-                id="eb"
-                name="eb"
-                value={form.eb}
-                onChange={handleChange}
-                step="any"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="nb">NB:</label>
-              <input
-                type="number"
-                id="nb"
-                name="nb"
-                value={form.nb}
-                onChange={handleChange}
-                step="any"
-                required
-              />
+            <div className="form-group join-pair">
+              <div>
+                <label htmlFor="eb">EB:</label>
+                <input
+                  type="number"
+                  id="eb"
+                  name="eb"
+                  value={form.eb}
+                  onChange={handleChange}
+                  step="any"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="nb">NB:</label>
+                <input
+                  type="number"
+                  id="nb"
+                  name="nb"
+                  value={form.nb}
+                  onChange={handleChange}
+                  step="any"
+                  required
+                />
+              </div>
             </div>
           </>
         )}
