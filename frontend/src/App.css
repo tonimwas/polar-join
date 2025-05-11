@@ -26,9 +26,54 @@ h1 {
 }
 
 .form-group {
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
+  gap: 4px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  cursor: pointer;
+}
+
+.dms-container {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.dms-field {
+  flex: 1;
+}
+
+.dms-field label {
+  display: block;
+  font-size: 0.875rem;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.dms-field input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.dms-field input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 }
 
 label {

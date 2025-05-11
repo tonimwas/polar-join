@@ -4,13 +4,19 @@ import './App.css';
 function App() {
   const [form, setForm] = useState({
     type: 'polar',
-    easting: '',
-    northing: '',
+    distance: '',
+    angle: '',
+    useAzimuth: false,
+    degrees: '',
+    minutes: '',
+    seconds: '',
     ea: '',
     na: '',
     eb: '',
     nb: ''
   });
+
+  const [showDMS, setShowDMS] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
@@ -27,7 +33,29 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    setResult(null);
+
+    // Validate required fields
+    if (!form.distance) {
+      setError('Please enter a distance');
+      return;
+    }
+
+    if (form.useAzimuth) {
+      if (
+        form.degrees === '' || form.degrees === null ||
+        form.minutes === '' || form.minutes === null ||
+        form.seconds === '' || form.seconds === null
+      ) {
+        setError('Please enter all DMS values (Degrees, Minutes, Seconds)');
+        return;
+      }
+    } else {
+      if (!form.angle) {
+        setError('Please enter an angle from East');
+        return;
+      }
+    }
+
     try {
       const response = await fetch('http://localhost:8000/api/calculate/', {
         method: 'POST',
@@ -35,7 +63,16 @@ function App() {
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          type: form.type,
+          useAzimuth: form.useAzimuth,
+          distance: parseFloat(form.distance),
+          angle: form.useAzimuth ? null : parseFloat(form.angle),
+          degrees: form.useAzimuth ? parseFloat(form.degrees === '' ? '0' : form.degrees) : null,
+          minutes: form.useAzimuth ? parseFloat(form.minutes === '' ? '0' : form.minutes) : null,
+          seconds: form.useAzimuth ? parseFloat(form.seconds === '' ? '0' : form.seconds) : null,
+        }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -69,29 +106,108 @@ function App() {
         {form.type === 'polar' && (
           <>
             <div className="form-group">
-              <label htmlFor="easting">Easting (ΔE):</label>
+              <label htmlFor="distance">Distance:</label>
               <input
                 type="number"
-                id="easting"
-                name="easting"
-                value={form.easting}
+                id="distance"
+                name="distance"
+                value={form.distance}
                 onChange={handleChange}
                 step="any"
                 required
               />
             </div>
+
             <div className="form-group">
-              <label htmlFor="northing">Northing (ΔN):</label>
-              <input
-                type="number"
-                id="northing"
-                name="northing"
-                value={form.northing}
-                onChange={handleChange}
-                step="any"
-                required
-              />
+              <label>Direction Type:</label>
+              <div className="radio-group">
+                <label>
+                  <input
+                    type="radio"
+                    name="directionType"
+                    checked={!form.useAzimuth}
+                    onChange={() => {
+                      setForm(prev => ({ ...prev, useAzimuth: false }));
+                      setShowDMS(false);
+                    }}
+                  />
+                  Angle from East
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="directionType"
+                    checked={form.useAzimuth}
+                    onChange={() => {
+                      setForm(prev => ({ ...prev, useAzimuth: true }));
+                      setShowDMS(true);
+                    }}
+                  />
+                  Azimuth (DMS)
+                </label>
+              </div>
             </div>
+
+            {showDMS ? (
+              <div className="form-group dms-inputs">
+                <label>DMS Direction:</label>
+                <div className="dms-container">
+                  <div className="dms-field">
+                    <label>Degrees:</label>
+                    <input
+                      type="number"
+                      id="degrees"
+                      name="degrees"
+                      value={form.degrees}
+                      onChange={handleChange}
+                      min="0"
+                      max="359"
+                      required
+                    />
+                  </div>
+                  <div className="dms-field">
+                    <label>Minutes:</label>
+                    <input
+                      type="number"
+                      id="minutes"
+                      name="minutes"
+                      value={form.minutes}
+                      onChange={handleChange}
+                      min="0"
+                      max="59"
+                      required
+                    />
+                  </div>
+                  <div className="dms-field">
+                    <label>Seconds:</label>
+                    <input
+                      type="number"
+                      id="seconds"
+                      name="seconds"
+                      value={form.seconds}
+                      onChange={handleChange}
+                      min="0"
+                      max="59.999"
+                      step="0.001"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="form-group">
+                <label htmlFor="angle">Angle from East:</label>
+                <input
+                  type="number"
+                  id="angle"
+                  name="angle"
+                  value={form.angle}
+                  onChange={handleChange}
+                  step="0.001"
+                  required
+                />
+              </div>
+            )}
           </>
         )}
 
@@ -167,24 +283,28 @@ function App() {
               return `${sign}${deg}° ${min}' ${sec}\"`;
             }
             return (
-              <div className="results-container">
-                <div className="result-section">
-                  <h4>Distance</h4>
-                  <p><strong>Distance:</strong> {Number(result.distance).toFixed(2)} m</p>
-                </div>
+              <div className="results">
+                {result && (
+                  <>
+                    {(result.method === 'join' || result.method === 'polar') && (
+                      <div className="result-section">
+                        <h4>Change in Eastings and Northings</h4>
+                        <p><strong>ΔE (Change in Eastings):</strong> {Number(result.delta_e).toFixed(2)} m</p>
+                        <p><strong>ΔN (Change in Northings):</strong> {Number(result.delta_n).toFixed(2)} m</p>
+                      </div>
+                    )}
 
-                <div className="result-section">
-                  <h4>Bearings</h4>
-                  <p><strong>Azimuth (from North, clockwise):</strong> {toDMS(result.azimuth)}</p>
-                  <p><strong>Bearing from East (math angle):</strong> {Number(result.bearing_from_east).toFixed(3)}°</p>
-                </div>
+                    <div className="result-section">
+                      <h4>Distance</h4>
+                      <p><strong>Distance:</strong> {Number(result.distance).toFixed(2)} m</p>
+                    </div>
 
-                {result.method === 'join' && (
-                  <div className="result-section">
-                    <h4>Coordinate Changes</h4>
-                    <p><strong>ΔE:</strong> {Number(result.delta_e).toFixed(2)} m</p>
-                    <p><strong>ΔN:</strong> {Number(result.delta_n).toFixed(2)} m</p>
-                  </div>
+                    <div className="result-section">
+                      <h4>Bearings</h4>
+                      <p><strong>Azimuth (from North, clockwise):</strong> {toDMS(result.azimuth)}</p>
+                      <p><strong>Bearing from East (math angle):</strong> {Number(result.bearing_from_east).toFixed(6)}°</p>
+                    </div>
+                  </>
                 )}
               </div>
             );
