@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.permissions import AllowAny
+from django.views.generic import View
+from django.http import HttpResponse
+import os
 import math
 
 def calculate_polar(distance, use_azimuth, degrees, minutes, seconds, angle):
