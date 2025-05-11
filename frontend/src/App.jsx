@@ -156,26 +156,40 @@ function App() {
       {result && (
         <div className="result-box">
           <h3>Result:</h3>
-          <div className="results-container">
-            <div className="result-section">
-              <h4>Distance</h4>
-              <p><strong>Distance:</strong> {result.distance} m</p>
-            </div>
+          {/* Utility for DMS formatting */}
+          {(() => {
+            function toDMS(angle) {
+              const deg = Math.floor(Math.abs(angle));
+              const minFloat = (Math.abs(angle) - deg) * 60;
+              const min = Math.floor(minFloat);
+              const sec = ((minFloat - min) * 60).toFixed(2);
+              const sign = angle < 0 ? '-' : '';
+              return `${sign}${deg}° ${min}' ${sec}\"`;
+            }
+            return (
+              <div className="results-container">
+                <div className="result-section">
+                  <h4>Distance</h4>
+                  <p><strong>Distance:</strong> {Number(result.distance).toFixed(2)} m</p>
+                </div>
 
-            <div className="result-section">
-              <h4>Bearings</h4>
-              <p><strong>Azimuth (from North, clockwise):</strong> {result.azimuth}°</p>
-              <p><strong>Bearing from East (math angle):</strong> {result.bearing_from_east}°</p>
-            </div>
+                <div className="result-section">
+                  <h4>Bearings</h4>
+                  <p><strong>Azimuth (from North, clockwise):</strong> {toDMS(result.azimuth)}</p>
+                  <p><strong>Bearing from East (math angle):</strong> {Number(result.bearing_from_east).toFixed(3)}°</p>
+                </div>
 
-            {result.method === 'join' && (
-              <div className="result-section">
-                <h4>Coordinate Changes</h4>
-                <p><strong>ΔE:</strong> {result.delta_e} m</p>
-                <p><strong>ΔN:</strong> {result.delta_n} m</p>
+                {result.method === 'join' && (
+                  <div className="result-section">
+                    <h4>Coordinate Changes</h4>
+                    <p><strong>ΔE:</strong> {Number(result.delta_e).toFixed(2)} m</p>
+                    <p><strong>ΔN:</strong> {Number(result.delta_n).toFixed(2)} m</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()}
+
         </div>
       )}
 
@@ -185,6 +199,7 @@ function App() {
         </div>
       )}
     </div>
+
   );
 }
 

@@ -8,7 +8,7 @@ import math
 def calculate_polar(easting, northing):
     """
     Calculate distance and bearing using the Polar method
-    Returns: (distance, bearing_from_north, bearing_from_east, full_circle)
+    Returns: (distance, azimuth, bearing_from_east)
     """
     delta_e = easting
     delta_n = northing
@@ -19,25 +19,19 @@ def calculate_polar(easting, northing):
     # Calculate angle from East (mathematical angle)
     bearing_from_east = math.degrees(math.atan2(delta_n, delta_e))
     
-    # Calculate full circle bearing
-    full_circle = (bearing_from_east + 360) % 360
+    # Normalize bearing_from_east to [0, 360)
+    bearing_from_east_norm = (bearing_from_east + 360) % 360
     
-    # Convert to bearing from North
-    if delta_e >= 0 and delta_n >= 0:  # NE quadrant
-        bearing_from_north = 90 - bearing_from_east
-    elif delta_e < 0 and delta_n >= 0:  # NW quadrant
-        bearing_from_north = 360 - bearing_from_east
-    elif delta_e < 0 and delta_n < 0:  # SW quadrant
-        bearing_from_north = 180 + bearing_from_east
-    else:  # SE quadrant
-        bearing_from_north = 90 - bearing_from_east
+    # Calculate azimuth (full-circle from North, clockwise)
+    azimuth = (90 - bearing_from_east) % 360
     
-    return distance, bearing_from_north, bearing_from_east, full_circle
+    return distance, azimuth, bearing_from_east
+
 
 def calculate_join(ea, na, eb, nb):
     """
     Calculate distance and bearing using the Join method
-    Returns: (distance, bearing_from_north, bearing_from_east, full_circle, delta_e, delta_n)
+    Returns: (distance, azimuth, bearing_from_east, delta_e, delta_n)
     """
     delta_e = eb - ea
     delta_n = nb - na
@@ -48,20 +42,13 @@ def calculate_join(ea, na, eb, nb):
     # Calculate angle from East (mathematical angle)
     bearing_from_east = math.degrees(math.atan2(delta_n, delta_e))
     
-    # Calculate full circle bearing
-    full_circle = (bearing_from_east + 360) % 360
+    # Normalize bearing_from_east to [0, 360)
+    bearing_from_east_norm = (bearing_from_east + 360) % 360
     
-    # Calculate bearing from North
-    if delta_e >= 0 and delta_n >= 0:  # NE quadrant
-        bearing_from_north = bearing_from_east
-    elif delta_e >= 0 and delta_n < 0:  # SE quadrant
-        bearing_from_north = 180 - bearing_from_east
-    elif delta_e < 0 and delta_n < 0:  # SW quadrant
-        bearing_from_north = 180 + bearing_from_east
-    else:  # NW quadrant
-        bearing_from_north = 360 + bearing_from_east
+    # Calculate azimuth (full-circle from North, clockwise)
+    azimuth = (90 - bearing_from_east) % 360
     
-    return distance, bearing_from_north, bearing_from_east, full_circle, delta_e, delta_n
+    return distance, azimuth, bearing_from_east, delta_e, delta_n
 
 
 class CalculateView(APIView):
@@ -76,12 +63,12 @@ class CalculateView(APIView):
             try:
                 easting = float(data.get('easting', 0))
                 northing = float(data.get('northing', 0))
-                distance, bearing_from_north, bearing_from_east, full_circle = calculate_polar(easting, northing)
+                distance, azimuth, bearing_from_east = calculate_polar(easting, northing)
                 # For polar, ΔE and ΔN are just easting and northing
                 result = {
                     'distance': round(distance, 4),
-                    'azimuth': round(bearing_from_north, 2),
-                    'bearing_from_east': round(bearing_from_east, 2),
+                    'azimuth': round(azimuth, 8),
+                    'bearing_from_east': round(bearing_from_east, 8),
                     'delta_e': round(easting, 4),
                     'delta_n': round(northing, 4),
                     'method': 'polar'
@@ -95,11 +82,11 @@ class CalculateView(APIView):
                 na = float(data.get('na', 0))
                 eb = float(data.get('eb', 0))
                 nb = float(data.get('nb', 0))
-                distance, bearing_from_north, bearing_from_east, full_circle, delta_e, delta_n = calculate_join(ea, na, eb, nb)
+                distance, azimuth, bearing_from_east, delta_e, delta_n = calculate_join(ea, na, eb, nb)
                 result = {
                     'distance': round(distance, 4),
-                    'azimuth': round(bearing_from_north, 2),
-                    'bearing_from_east': round(bearing_from_east, 2),
+                    'azimuth': round(azimuth, 8),
+                    'bearing_from_east': round(bearing_from_east, 8),
                     'delta_e': round(delta_e, 4),
                     'delta_n': round(delta_n, 4),
                     'method': 'join'
