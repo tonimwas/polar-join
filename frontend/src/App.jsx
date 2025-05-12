@@ -96,184 +96,198 @@ function App() {
     <div className="calculator-container">
       <h1>Polar & Join Calculator</h1>
       <form onSubmit={handleSubmit} className="calculator-form">
-        <div className="form-group">
-          <label htmlFor="type">Calculation Type:</label>
-          <select
-            id="type"
-            name="type"
-            value={form.type}
-            onChange={handleTypeChange}
-            required
+        <div className="calculation-tabs">
+          <button
+            type="button"
+            className={`tab-button ${form.type === 'polar' ? 'active' : ''}`}
+            onClick={() => handleTypeChange({ target: { value: 'polar' } })}
           >
-            <option value="polar">Polar to Cartesian</option>
-            <option value="join">Join (Line)</option>
-          </select>
+            Polar
+          </button>
+          <button
+            type="button"
+            className={`tab-button ${form.type === 'join' ? 'active' : ''}`}
+            onClick={() => handleTypeChange({ target: { value: 'join' } })}
+          >
+            Join
+          </button>
         </div>
 
-        {form.type === 'polar' && (
-          <>
-            <div className="form-group">
-              <label htmlFor="distance">Distance:</label>
-              <input
-                type="number"
-                id="distance"
-                name="distance"
-                value={form.distance}
-                onChange={handleChange}
-                step="any"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Direction Type:</label>
-              <div className="radio-group">
-                <label>
-                  <input
-                    type="radio"
-                    name="directionType"
-                    checked={!form.useAzimuth}
-                    onChange={() => {
-                      setForm(prev => ({ ...prev, useAzimuth: false }));
-                      setShowDMS(false);
-                    }}
-                  />
-                  Angle from East
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="directionType"
-                    checked={form.useAzimuth}
-                    onChange={() => {
-                      setForm(prev => ({ ...prev, useAzimuth: true }));
-                      setShowDMS(true);
-                    }}
-                  />
-                  Azimuth (DMS)
-                </label>
+        <div className="calculation-view">
+          {/* Polar calculation view */}
+          {form.type === 'polar' && (
+            <>
+              <div className="form-group">
+                <label htmlFor="distance">Distance:</label>
+                <input
+                  type="number"
+                  id="distance"
+                  name="distance"
+                  value={form.distance}
+                  onChange={handleChange}
+                  step="any"
+                  required
+                />
               </div>
-            </div>
 
-            {showDMS ? (
-              <div className="form-group dms-inputs">
-                <label>DMS Direction:</label>
-                <div className="dms-container">
-                  <div className="dms-field">
-                    <label>Degrees:</label>
+              <div className="form-group">
+                <label>Direction Type:</label>
+                <div className="radio-group">
+                  <label>
                     <input
-                      type="number"
-                      id="degrees"
-                      name="degrees"
-                      value={form.degrees}
-                      onChange={handleChange}
-                      min="0"
-                      max="359"
-                      required
+                      type="radio"
+                      name="directionType"
+                      checked={!form.useAzimuth}
+                      onChange={() => {
+                        setForm(prev => ({ ...prev, useAzimuth: false }));
+                        setShowDMS(false);
+                      }}
                     />
-                  </div>
-                  <div className="dms-field">
-                    <label>Minutes:</label>
+                    Angle from East
+                  </label>
+                  <label>
                     <input
-                      type="number"
-                      id="minutes"
-                      name="minutes"
-                      value={form.minutes}
-                      onChange={handleChange}
-                      min="0"
-                      max="59"
-                      required
+                      type="radio"
+                      name="directionType"
+                      checked={form.useAzimuth}
+                      onChange={() => {
+                        setForm(prev => ({ ...prev, useAzimuth: true }));
+                        setShowDMS(true);
+                      }}
                     />
-                  </div>
-                  <div className="dms-field">
-                    <label>Seconds:</label>
-                    <input
-                      type="number"
-                      id="seconds"
-                      name="seconds"
-                      value={form.seconds}
-                      onChange={handleChange}
-                      min="0"
-                      max="59.999"
-                      step="0.001"
-                      required
-                    />
-                  </div>
+                    Azimuth (DMS)
+                  </label>
                 </div>
               </div>
-            ) : (
-              <div className="form-group">
-                <label htmlFor="angle">Angle from East:</label>
-                <input
-                  type="number"
-                  id="angle"
-                  name="angle"
-                  value={form.angle}
-                  onChange={handleChange}
-                  step="0.001"
-                  required
-                />
-              </div>
-            )}
-          </>
-        )}
 
-        {form.type === 'join' && (
-          <>
-            <div className="form-group join-pair">
-              <div>
-                <label htmlFor="ea">EA:</label>
-                <input
-                  type="number"
-                  id="ea"
-                  name="ea"
-                  value={form.ea}
-                  onChange={handleChange}
-                  step="any"
-                  required
-                />
+              {showDMS ? (
+                <div className="form-group dms-inputs">
+                  <label>DMS Direction:</label>
+                  <div className="dms-container">
+                    <div className="dms-field">
+                      <label>Degrees:</label>
+                      <input
+                        type="number"
+                        id="degrees"
+                        name="degrees"
+                        value={form.degrees}
+                        onChange={handleChange}
+                        min="0"
+                        max="359"
+                        required
+                      />
+                    </div>
+                    <div className="dms-field">
+                      <label>Minutes:</label>
+                      <input
+                        type="number"
+                        id="minutes"
+                        name="minutes"
+                        value={form.minutes}
+                        onChange={handleChange}
+                        min="0"
+                        max="59"
+                        required
+                      />
+                    </div>
+                    <div className="dms-field">
+                      <label>Seconds:</label>
+                      <input
+                        type="number"
+                        id="seconds"
+                        name="seconds"
+                        value={form.seconds}
+                        onChange={handleChange}
+                        min="0"
+                        max="59.999"
+                        step="0.001"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label htmlFor="angle">Angle from East:</label>
+                  <input
+                    type="number"
+                    id="angle"
+                    name="angle"
+                    value={form.angle}
+                    onChange={handleChange}
+                    step="0.001"
+                    required
+                  />
+                </div>
+              )}
+              
+              {/* Empty space to maintain consistent height */}
+              <div className="spacer"></div>
+            </>
+          )}
+
+          {/* Join calculation view */}
+          {form.type === 'join' && (
+            <>
+              <div className="form-group join-pair">
+                <div>
+                  <label htmlFor="ea">EA:</label>
+                  <input
+                    type="number"
+                    id="ea"
+                    name="ea"
+                    value={form.ea}
+                    onChange={handleChange}
+                    step="any"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="na">NA:</label>
+                  <input
+                    type="number"
+                    id="na"
+                    name="na"
+                    value={form.na}
+                    onChange={handleChange}
+                    step="any"
+                    required
+                  />
+                </div>
               </div>
-              <div>
-                <label htmlFor="na">NA:</label>
-                <input
-                  type="number"
-                  id="na"
-                  name="na"
-                  value={form.na}
-                  onChange={handleChange}
-                  step="any"
-                  required
-                />
+              <div className="form-group join-pair">
+                <div>
+                  <label htmlFor="eb">EB:</label>
+                  <input
+                    type="number"
+                    id="eb"
+                    name="eb"
+                    value={form.eb}
+                    onChange={handleChange}
+                    step="any"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="nb">NB:</label>
+                  <input
+                    type="number"
+                    id="nb"
+                    name="nb"
+                    value={form.nb}
+                    onChange={handleChange}
+                    step="any"
+                    required
+                  />
+                </div>
               </div>
-            </div>
-            <div className="form-group join-pair">
-              <div>
-                <label htmlFor="eb">EB:</label>
-                <input
-                  type="number"
-                  id="eb"
-                  name="eb"
-                  value={form.eb}
-                  onChange={handleChange}
-                  step="any"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="nb">NB:</label>
-                <input
-                  type="number"
-                  id="nb"
-                  name="nb"
-                  value={form.nb}
-                  onChange={handleChange}
-                  step="any"
-                  required
-                />
-              </div>
-            </div>
-          </>
-        )}
+              
+              {/* Empty space to maintain consistent height */}
+              <div className="spacer"></div>
+              <div className="spacer"></div>
+            </>
+          )}
+        </div>
 
         <button type="submit" className="calculate-button">
           Calculate
