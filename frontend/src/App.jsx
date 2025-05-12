@@ -113,7 +113,7 @@ function App() {
           </button>
         </div>
 
-        <div className="calculation-view">
+        <div className="inputs-container">
           {/* Polar calculation view */}
           {form.type === 'polar' && (
             <>
@@ -288,10 +288,11 @@ function App() {
             </>
           )}
         </div>
-
+        <div className="calcbutbox">
         <button type="submit" className="calculate-button">
           Calculate
         </button>
+        </div>
       </form>
 
       {result && (
