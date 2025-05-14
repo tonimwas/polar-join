@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PolarJoinCalculator</string>
+    <string name="title_activity_main">PolarJoinCalculator</string>
+    <string name="package_name">io.surveying.polarjoin</string>
+    <string name="custom_url_scheme">io.surveying.polarjoin</string>
+</resources>
