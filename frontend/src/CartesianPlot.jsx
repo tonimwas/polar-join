@@ -164,17 +164,24 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
       ctx.fill();
       // Draw label
       ctx.fillStyle = '#000';
-      ctx.font = 'bold 14px Arial';
+      const labelFontSize = Math.max(14, Math.floor(height * 0.07));  // dynamic label font size based on canvas height
+      ctx.font = `bold ${labelFontSize}px Arial`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText((nameA && nameA.trim()) ? nameA : 'A', x, y - 15);
       // Draw coordinates: above normally, below if rightward
-      ctx.font = '11px Arial';
-      const coordText = `(${pointA.x.toFixed(2)}, ${pointA.y.toFixed(2)})`;
+      const coordFontSize = Math.max(12, Math.floor(height * 0.07));  // dynamic coordinate font size
+      ctx.font = `${coordFontSize}px Arial`;
+      const coordText = `(${pointA.x.toFixed(precision)}, ${pointA.y.toFixed(precision)})`;
+      const textWidth = ctx.measureText(coordText).width;
+      let textPos = x;
+      const minPos = padding + textWidth / 2;
+      const maxPos = padding + width - textWidth / 2;
+      textPos = Math.min(Math.max(textPos, minPos), maxPos);
       if (isRightward) {
-        ctx.fillText(coordText, x, y + 20);
+        ctx.fillText(coordText, textPos, y + 20);
       } else {
-        ctx.fillText(coordText, x, y - 30);
+        ctx.fillText(coordText, textPos, y - 30);
       }
     }
     // Draw point B if defined
@@ -188,17 +195,24 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
       ctx.fill();
       // Draw label
       ctx.fillStyle = '#000';
-      ctx.font = 'bold 14px Arial';
+      const labelFontSize = Math.max(14, Math.floor(height * 0.07));  // dynamic label font size based on canvas height
+      ctx.font = `bold ${labelFontSize}px Arial`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText((nameB && nameB.trim()) ? nameB : 'B', x, y - 15);
       // Draw coordinates: below normally, above if rightward
-      ctx.font = '11px Arial';
-      const coordText = `(${pointB.x.toFixed(2)}, ${pointB.y.toFixed(2)})`;
+      const coordFontSize = Math.max(14, Math.floor(height * 0.07));  // dynamic coordinate font size
+      ctx.font = `${coordFontSize}px Arial`;
+      const coordText = `(${pointB.x.toFixed(precision)}, ${pointB.y.toFixed(precision)})`;
+      const textWidthB = ctx.measureText(coordText).width;
+      let textPosB = x;
+      const minPosB = padding + textWidthB / 2;
+      const maxPosB = padding + width - textWidthB / 2;
+      textPosB = Math.min(Math.max(textPosB, minPosB), maxPosB);
       if (isRightward) {
-        ctx.fillText(coordText, x, y - 30);
+        ctx.fillText(coordText, textPosB, y - 30);
       } else {
-        ctx.fillText(coordText, x, y + 20);
+        ctx.fillText(coordText, textPosB, y + 20);
       }
     }
 

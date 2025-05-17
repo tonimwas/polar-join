@@ -384,6 +384,37 @@ function App() {
               nameB={form.type === 'polar' ? (form.polarEndName || '') : form.nameB}
               precision={precision}
             />
+
+{result && (
+        <div className="result-box">
+          <h3>Result:</h3>
+          <div className="results">
+            {result && (
+              <>
+                {(result.method === 'join' || result.method === 'polar') && (
+                  <div className="result-section">
+                    <h4>Change in Eastings and Northings</h4>
+                    <p><strong>ΔE (Change in Eastings):</strong> {Number(result.delta_e).toFixed(2)} m</p>
+                    <p><strong>ΔN (Change in Northings):</strong> {Number(result.delta_n).toFixed(2)} m</p>
+                  </div>
+                )}
+
+                <div className="result-section">
+                  <h4>Distance</h4>
+                  <p><strong>Distance:</strong> {Number(result.distance).toFixed(precision)} m</p>
+                </div>
+
+                <div className="result-section">
+                  <h4>Bearings</h4>
+                  <p><strong>Azimuth (from North, clockwise):</strong> {toDMS(result.azimuth)}</p>
+                  <p><strong>Bearing from East (math angle):</strong> {Number(result.bearing_from_east).toFixed(6)}°</p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      
           </div>
           
           {/* Polar start point input section */}
@@ -858,35 +889,6 @@ function App() {
         </div>
       )}
 
-      {result && (
-        <div className="result-box">
-          <h3>Result:</h3>
-          <div className="results">
-            {result && (
-              <>
-                {(result.method === 'join' || result.method === 'polar') && (
-                  <div className="result-section">
-                    <h4>Change in Eastings and Northings</h4>
-                    <p><strong>ΔE (Change in Eastings):</strong> {Number(result.delta_e).toFixed(2)} m</p>
-                    <p><strong>ΔN (Change in Northings):</strong> {Number(result.delta_n).toFixed(2)} m</p>
-                  </div>
-                )}
-
-                <div className="result-section">
-                  <h4>Distance</h4>
-                  <p><strong>Distance:</strong> {Number(result.distance).toFixed(precision)} m</p>
-                </div>
-
-                <div className="result-section">
-                  <h4>Bearings</h4>
-                  <p><strong>Azimuth (from North, clockwise):</strong> {toDMS(result.azimuth)}</p>
-                  <p><strong>Bearing from East (math angle):</strong> {Number(result.bearing_from_east).toFixed(6)}°</p>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
       
       {error && (
         <div className="error-box">
