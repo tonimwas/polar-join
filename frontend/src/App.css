@@ -443,6 +443,7 @@ input, select {
   height: 200px;  
   box-sizing: border-box;  
   overflow: hidden;  
+  justify-content: space-evenly;
 }
 
 
