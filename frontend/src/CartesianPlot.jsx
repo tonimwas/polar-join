@@ -179,7 +179,7 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
       const maxPos = padding + width - textWidth / 2;
       textPos = Math.min(Math.max(textPos, minPos), maxPos);
       if (isRightward) {
-        ctx.fillText(coordText, textPos, y + 20);
+        ctx.fillText(coordText, textPos, y + 30);
       } else {
         ctx.fillText(coordText, textPos, y - 30);
       }
@@ -212,7 +212,7 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
       if (isRightward) {
         ctx.fillText(coordText, textPosB, y - 30);
       } else {
-        ctx.fillText(coordText, textPosB, y + 20);
+        ctx.fillText(coordText, textPosB, y + 30);
       }
     }
 
@@ -248,7 +248,7 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
       const midY = (startY + endY) / 2;
       
       // Offset distance perpendicular to the line
-      const offsetDistance = 20;
+      const offsetDistance = 10;
       
       // Calculate perpendicular angle for placing labels above/below line
       const perpAngle = angleRad + Math.PI/2;
