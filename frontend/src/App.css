@@ -41,6 +41,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 0px 15px 0px 15px;
+  overflow: hidden;
 }
 
 .calculator-container {
@@ -48,12 +49,11 @@ body {
   max-width: 430px;
   margin: 5px auto;
   background-color: white;
-  
-  height: 100%;
   border-radius: 15px;
   border: 2px solid black;
   display: flex;
   flex-direction: column;
+  min-height: 0px;
 }
 
 a {
@@ -203,6 +203,7 @@ select {
   flex-grow: 1;
   flex-direction: column;
   overflow-y: auto;
+  min-height: 0px;
 
   width: 100%;
 }

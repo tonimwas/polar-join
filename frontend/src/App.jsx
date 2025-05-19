@@ -407,7 +407,7 @@ function App() {
                         <div className="result-section">
                           <h4>Bearings</h4>
                           <p><strong>Azimuth (from North, clockwise):</strong></p><p> {toDMS(result.azimuth)}</p>
-                          <p><strong>Bearing from East (math angle):</strong></p><p> {Number(result.bearing_from_east).toFixed(6)}°</p>
+                          <p><strong>Bearing from East (math angle):</strong></p><p> {Number(result.bearing_from_east).toFixed(precision)}°</p>
                         </div>
                       </>
                     )}

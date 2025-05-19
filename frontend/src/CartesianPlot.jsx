@@ -208,7 +208,7 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
       let textPosB = x;
       const minPosB = padding + textWidthB / 2;
       const maxPosB = padding + width - textWidthB / 2;
-      textPosB = Math.min(Math.max(textPosB, minPosB), maxPosB);
+      textPosB = Math.min(Math.max(textPosB, minPosB), maxPosB, );
       if (isRightward) {
         ctx.fillText(coordText, textPosB, y - 30);
       } else {
@@ -239,7 +239,9 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
         const d = Math.floor(deg);
         const m = Math.floor((deg - d) * 60);
         const s = ((deg - d) * 60 - m) * 60;
-        return `${d}°${m}'${s.toFixed(2)}"`;
+        
+        // Use 2 decimal places for seconds as it's standard for DMS
+        return `${d}°${m}'${s.toFixed(precision)}"`;
       }
       const azimuthDMS = toDMS(azimuthDeg);
       
@@ -278,18 +280,18 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
         ctx.save();
         ctx.translate(aboveX, aboveY);
         ctx.rotate(textAngleRad);
-        ctx.font = 'bold 12px Arial';
+        ctx.font = 'bold 17px calibri';
         ctx.fillStyle = '#333';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`Distance: ${dist.toFixed(2)}`, 0, 0);
+        ctx.fillText(`Distance: ${dist.toFixed(precision)}`, 0, 0);
         ctx.restore();
         
         // Draw AZIMUTH below the line
         ctx.save();
         ctx.translate(belowX, belowY);
         ctx.rotate(textAngleRad);
-        ctx.font = 'bold 12px Arial';
+        ctx.font = 'bold 17px calibri';
         ctx.fillStyle = '#333';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -303,7 +305,7 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
         ctx.save();
         ctx.translate(aboveX, aboveY);
         ctx.rotate(textAngleRad);
-        ctx.font = 'bold 12px Arial';
+        ctx.font = 'bold 17px calibri';
         ctx.fillStyle = '#333';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -314,11 +316,11 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
         ctx.save();
         ctx.translate(belowX, belowY);
         ctx.rotate(textAngleRad);
-        ctx.font = 'bold 12px Arial';
+        ctx.font = 'bold 17px calibri';
         ctx.fillStyle = '#333';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`Distance: ${dist.toFixed(2)}`, 0, 0);
+        ctx.fillText(`Distance: ${dist.toFixed(precision)}`, 0, 0);
         ctx.restore();
       }
     }
