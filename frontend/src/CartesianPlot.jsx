@@ -280,8 +280,8 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
         ctx.save();
         ctx.translate(aboveX, aboveY);
         ctx.rotate(textAngleRad);
-        ctx.font = 'bold 17px calibri';
-        ctx.fillStyle = '#333';
+        ctx.font = '17.5px calibri';
+        ctx.fillStyle = '#1C39BB';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(`Distance: ${dist.toFixed(precision)}`, 0, 0);
@@ -291,8 +291,8 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
         ctx.save();
         ctx.translate(belowX, belowY);
         ctx.rotate(textAngleRad);
-        ctx.font = 'bold 17px calibri';
-        ctx.fillStyle = '#333';
+        ctx.font = '17.5px calibri';
+        ctx.fillStyle = '#1C39BB';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(`Azimuth: ${azimuthDMS}`, 0, 0);
@@ -305,8 +305,8 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
         ctx.save();
         ctx.translate(aboveX, aboveY);
         ctx.rotate(textAngleRad);
-        ctx.font = 'bold 17px calibri';
-        ctx.fillStyle = '#333';
+        ctx.font = '17.5px calibri';
+        ctx.fillStyle = '#1C39BB';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(`Azimuth: ${azimuthDMS}`, 0, 0);
@@ -316,8 +316,8 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
         ctx.save();
         ctx.translate(belowX, belowY);
         ctx.rotate(textAngleRad);
-        ctx.font = 'bold 17px calibri';
-        ctx.fillStyle = '#333';
+        ctx.font = '17.5px calibri';
+        ctx.fillStyle = '#1C39BB';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(`Distance: ${dist.toFixed(precision)}`, 0, 0);
