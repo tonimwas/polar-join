@@ -124,6 +124,49 @@ function App() {
     }
   }, [form.type, form.polarEa, form.polarNa, savedPoints]);
 
+  // Effect to update join point names when coordinates change
+  useEffect(() => {
+    // Handle Point A
+    if (form.type === 'join' && form.ea && form.na) {
+      const match = savedPoints.find(pt =>
+        Number(pt.e).toFixed(3) === Number(form.ea).toFixed(3) &&
+        Number(pt.n).toFixed(3) === Number(form.na).toFixed(3)
+      );
+      if (match) {
+        if (form.nameA !== match.name || !savedStatus.A) {
+          setForm(f => ({ ...f, nameA: match.name }));
+          setSavedStatus(prev => ({ ...prev, A: true }));
+        }
+      } else {
+        // Only clear name if we had a name and it no longer matches
+        if (form.nameA !== '' && savedStatus.A) {
+          setForm(f => ({ ...f, nameA: '' }));
+          setSavedStatus(prev => ({ ...prev, A: false }));
+        }
+      }
+    }
+
+    // Handle Point B
+    if (form.type === 'join' && form.eb && form.nb) {
+      const match = savedPoints.find(pt =>
+        Number(pt.e).toFixed(3) === Number(form.eb).toFixed(3) &&
+        Number(pt.n).toFixed(3) === Number(form.nb).toFixed(3)
+      );
+      if (match) {
+        if (form.nameB !== match.name || !savedStatus.B) {
+          setForm(f => ({ ...f, nameB: match.name }));
+          setSavedStatus(prev => ({ ...prev, B: true }));
+        }
+      } else {
+        // Only clear name if we had a name and it no longer matches
+        if (form.nameB !== '' && savedStatus.B) {
+          setForm(f => ({ ...f, nameB: '' }));
+          setSavedStatus(prev => ({ ...prev, B: false }));
+        }
+      }
+    }
+  }, [form.type, form.ea, form.na, form.eb, form.nb, savedPoints]);
+
   // Save individual point handler (prevent duplicate coordinates)
   const handleSavePoint = (name, e, n, pointKey) => {
     const pt = { name: name.trim(), e, n };
@@ -210,21 +253,57 @@ function App() {
   };
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    // Reset save icon to clipboard for the relevant point if any input changes
-    if (['nameA', 'ea', 'na'].includes(e.target.name)) {
-      // For start point, only reset saved status if coordinates change
-      if (['ea', 'na'].includes(e.target.name)) {
-        setSavedStatus((prev) => ({ ...prev, A: false }));
+    const { name, value } = e.target;
+    const newForm = { ...form, [name]: value };
+    
+    // Check if coordinates match any saved point
+    if (['ea', 'na', 'eb', 'nb'].includes(name)) {
+      // Check for point A
+      if (['ea', 'na'].includes(name)) {
+        const matchingPoint = savedPoints.find(
+          pt => Number(pt.e).toFixed(3) === Number(newForm.ea).toFixed(3) && 
+               Number(pt.n).toFixed(3) === Number(newForm.na).toFixed(3)
+        );
+        if (matchingPoint) {
+          // If coordinates match a saved point, set the name and mark as saved
+          newForm.nameA = matchingPoint.name;
+          setSavedStatus(prev => ({ ...prev, A: true }));
+        } else {
+          // If coordinates don't match, clear the name and mark as not saved
+          if (savedStatus.A) {
+            newForm.nameA = '';
+          }
+          setSavedStatus(prev => ({ ...prev, A: false }));
+        }
+      }
+      
+      // Check for point B
+      if (['eb', 'nb'].includes(name)) {
+        const matchingPoint = savedPoints.find(
+          pt => Number(pt.e).toFixed(3) === Number(newForm.eb).toFixed(3) && 
+               Number(pt.n).toFixed(3) === Number(newForm.nb).toFixed(3)
+        );
+        if (matchingPoint) {
+          // If coordinates match a saved point, set the name and mark as saved
+          newForm.nameB = matchingPoint.name;
+          setSavedStatus(prev => ({ ...prev, B: true }));
+        } else {
+          // If coordinates don't match, clear the name and mark as not saved
+          if (savedStatus.B) {
+            newForm.nameB = '';
+          }
+          setSavedStatus(prev => ({ ...prev, B: false }));
+        }
       }
     }
-    if (['nameB', 'eb', 'nb'].includes(e.target.name)) {
-      setSavedStatus((prev) => ({ ...prev, B: false }));
-    }
+    
+    setForm(newForm);
+    
     // Reset endpoint save status for polar tab if relevant fields change
-    if (['polarEndName', 'polarEa', 'polarNa', 'distance', 'angle', 'degrees', 'minutes', 'seconds'].includes(e.target.name)) {
-      setSavedStatus((prev) => ({ ...prev, polarEnd: false }));
+    if (['polarEndName', 'polarEa', 'polarNa', 'distance', 'angle', 'degrees', 'minutes', 'seconds'].includes(name)) {
+      setSavedStatus(prev => ({ ...prev, polarEnd: false }));
     }
+    
     setError(null); // Clear error on input change
   };
 
@@ -321,8 +400,9 @@ function App() {
               tabIndex="-1"
               style={{ outline: 'none' }}
             >
-              Polar
+              Polar 
             </button>
+            
             <button
               type="button"
               className={`tab-button ${form.type === 'join' ? 'active' : ''}`}
@@ -400,8 +480,8 @@ function App() {
                         )}
 
                         <div className="result-section">
-                          
-                        <div className='dist'><h4>Distance:</h4> <p>{Number(result.distance).toFixed(precision)} m</p></div>
+
+                          <div className='dist'><h4>Distance:</h4> <p>{Number(result.distance).toFixed(precision)} m</p></div>
                         </div>
 
                         <div className="result-section">
@@ -488,7 +568,7 @@ function App() {
                     </div>
                   </div>
 
-                  <div>
+                  <div className='distancebox'>
                     <label htmlFor="distance">Distance:</label>
                     <input
                       type="number"
@@ -519,17 +599,6 @@ function App() {
                       <div className="direction-type-selector">
                         <button
                           type="button"
-                          className={`direction-button ${!form.useAzimuth ? 'active' : ''}`}
-                          onClick={() => {
-                            setForm({ ...form, useAzimuth: false });
-                            setShowDMS(false);
-                          }}
-                          style={{ outline: 'none' }}
-                        >
-                          Angle from East
-                        </button>
-                        <button
-                          type="button"
                           className={`direction-button ${form.useAzimuth ? 'active' : ''}`}
                           onClick={() => {
                             setForm({ ...form, useAzimuth: true });
@@ -539,6 +608,19 @@ function App() {
                         >
                           Azimuth (from North)
                         </button>
+
+                        <button
+                          type="button"
+                          className={`direction-button ${!form.useAzimuth ? 'active' : ''}`}
+                          onClick={() => {
+                            setForm({ ...form, useAzimuth: false });
+                            setShowDMS(false);
+                          }}
+                          style={{ outline: 'none' }}
+                        >
+                          Angle from East
+                        </button>
+
                       </div>
                     </div>
 
@@ -591,7 +673,7 @@ function App() {
                         </div>
                       </div>
                     ) : (
-                      <div>
+                      <div className='anglefromeast'>
                         <label htmlFor="angle">Angle from East (degrees):</label>
                         <input
                           type="number"
@@ -736,10 +818,7 @@ function App() {
                       id="ea"
                       name="ea"
                       value={form.ea}
-                      onChange={(e) => {
-                        handleChange(e);
-                        setSavedStatus(prev => ({ ...prev, A: false }));
-                      }}
+                      onChange={handleChange}
                       step="any"
                       required
                     />
@@ -751,10 +830,7 @@ function App() {
                       id="na"
                       name="na"
                       value={form.na}
-                      onChange={(e) => {
-                        handleChange(e);
-                        setSavedStatus(prev => ({ ...prev, A: false }));
-                      }}
+                      onChange={handleChange}
                       step="any"
                       required
                     />
@@ -777,7 +853,7 @@ function App() {
                                 return;
                               }
                               setForm(f => ({ ...f, nameB: pt.name, eb: pt.e, nb: pt.n }));
-                              setSavedStatus(prev => ({ ...prev, B: false }));
+                              setSavedStatus(prev => ({ ...prev, B: true }));
                               setError(null);
                             }
                           }}
@@ -831,7 +907,6 @@ function App() {
                     />
                   </div>
                 </div>
-
                 {/* Empty space to maintain consistent height */}
                 <div className="spacer"></div>
                 <div className="spacer"></div>
@@ -892,23 +967,23 @@ function App() {
         </div>
 
         {error && (
-            <div className="error-box">
-              <p>Error: {error}</p>
-            </div>
-          )}
+          <div className="error-box">
+            <p>Error: {error}</p>
+          </div>
+        )}
 
-        
+
       </div>
       <footer className="app-footer">
-          <div className="footer-content">
-            <p>© {new Date().getFullYear()} Polar & Join Calculator v1.0.0</p>
-            <div className="footer-links">
-              <a href="#" onClick={(e) => { e.preventDefault(); /* Add about action */ }}>About</a>
-              <span className="divider">|</span>
-              <a href="#" onClick={(e) => { e.preventDefault(); /* Add help action */ }}>Help</a>
-            </div>
+        <div className="footer-content">
+          <p>© {new Date().getFullYear()} Polar & Join Calculator v1.0.0</p>
+          <div className="footer-links">
+            <a href="#" onClick={(e) => { e.preventDefault(); /* Add about action */ }}>About</a>
+            <span className="divider">|</span>
+            <a href="#" onClick={(e) => { e.preventDefault(); /* Add help action */ }}>Help</a>
           </div>
-        </footer>
+        </div>
+      </footer>
     </div>
   );
 }

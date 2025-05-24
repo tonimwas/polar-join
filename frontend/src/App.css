@@ -39,18 +39,20 @@ body {
   flex-direction: column;
   padding: 0 15px;
   overflow: hidden;
+  
 }
 
 .calculator-container {
   flex: 1;
   max-width: 430px;
   margin: 5px auto;
-  background-color: white;
+  background-color: #f3f4f6;
   border-radius: 15px;
   border: 2px solid black;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  align-items: center;
 }
 
 /* Links and buttons */
@@ -66,9 +68,8 @@ a:hover {
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
+  
+  
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
@@ -89,9 +90,10 @@ button:focus-visible {
 /* Header */
 .header-section {
   background-color: #FF69B4;
-  padding: 12px;
+  padding: 10px;
   display: flex;
   justify-content: center;
+  width: 100%;
 }
 
 .header-title {
@@ -124,6 +126,7 @@ button:focus-visible {
   border: none;
   border-bottom: 2px solid black;
   font-family: 'cascade', sans-serif;
+  border-radius: 0px;
 }
 
 .tab-button:hover {
@@ -131,7 +134,7 @@ button:focus-visible {
 }
 
 .tab-button.active {
-  background-color: #ffffff;
+  background-color: #f3f4f6;
   color: #FF69B4;
   border: 2px solid black;
   border-bottom: 3px solid #f3f4f6;
@@ -142,9 +145,8 @@ button:focus-visible {
 .precision-row {
   display: flex;
   align-items: center;
-  padding: 0 0 2px;
+  padding: 0 0 2px 5px;
   justify-content: flex-start;
-  border: 2px solid black;
   border-top-color: white;
   border-bottom-width: 1px;
 }
@@ -220,6 +222,10 @@ select:focus {
 
 .form-group.join-pair {
   flex-direction: row;
+  padding-bottom: 5px;
+  padding-top: 5px;
+  padding-left: 5px;
+  border-top: 1px solid #a59b9b;
 }
 
 .form-group.join-pair input {
@@ -236,28 +242,62 @@ select:focus {
 
 /* Input containers */
 .inputs-container {
-  border: 3px solid #FF8C00;
-  border-radius: 8px;
+  
   padding: 0;
   margin-bottom: 0;
   width: 100%;
   flex-shrink: 0;
 }
 
+.distancebox{
+  padding: 5px;
+  display: flex;
+  border: solid #a59b9b;
+  border-width: 1px 0px 1px 0px;
+  margin-bottom: 2px;
+  
+}
+
+.distancebox #distance{
+display: flex;
+position: relative;
+left:10%;
+}
+
 .direction-input-container {
   background-color: #FF69B4;
-  border: solid black;
-  border-width: 1px 0;
-  padding-top: 3px;
+  padding-top: 5px;
+  justify-content: space-evenly;
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  flex-shrink: initial;
+
+}
+
+.direction-type-selector{
+display: flex;
+flex-direction: row;
+width: 100%;
+
 }
 
 .direction-button {
   background-color: #FF69B4;
-  padding: 5px;
+  width: 100%;
+  border: solid #a59b9b;
+  border-width:0px 0px 1px 0px ;
+  height: 25px;
+  
 }
 
 .direction-button.active {
-  background-color: #f5f5f5;
+  background-color: #f3f4f6;
+  outline: none;
+  border: solid #a59b9b;
+  border-width: 1px 1px 0px 1px;
+  border-top-right-radius:10px;
+  border-top-left-radius: 10px;
 }
 
 /* Calculate button */
@@ -265,19 +305,23 @@ select:focus {
   display: flex;
   justify-content: center;
   max-width: 100%;
-  border: 4px solid #FF8C00;
+  border: solid #a59b9b;
+  border-width: 1px 0px 1px 0px;
+  padding: 5px;
+  margin-bottom: 2px;
 }
 
 .calculate-button {
   background-color: #4CAF50;
   color: white;
-  border: none;
   padding: 3px 15px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
-  margin: 0.75rem 0 0.5rem;
   transition: background-color 0.3s;
+  border: none;
+  
+
 }
 
 .calculate-button:hover {
@@ -290,9 +334,9 @@ select:focus {
   justify-content: center;
   width: 100%;
   margin-bottom: 10px;
-  border: 1px solid black;
+  border: 1px solid #a59b9b;
   padding: 0;
-  height: 200px;
+  max-height: 215px;
   overflow: hidden;
 }
 
@@ -306,6 +350,7 @@ select:focus {
 }
 
 /* Results */
+
 .result-box {
   margin-top: 0;
   padding: 2px;
@@ -315,7 +360,8 @@ select:focus {
   font-size: 12px;
   display: flex;
   overflow: auto;
-  align-items: center;
+  
+  
 }
 
 .results-container {
@@ -351,12 +397,16 @@ select:focus {
 
 /* Error */
 .error-box {
-  margin-top: 5px;
+  margin-top: 0.5px;
   padding: 5px;
+  width: calc(100% - 50px);
   background: #ffebee;
   border-radius: 4px;
   border-left: 4px solid #f44336;
   color: #c62828;
+  display: flex;
+  justify-content: center;
+  position: relative;
 }
 
 /* Saved points */
@@ -463,9 +513,13 @@ select:focus {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  margin-top: 0.5rem;
   width: 100%;
   font-size: 12px;
+  padding: 5px;
+}
+
+.anglefromeast{
+  padding: 5px;
 }
 
 .dms-inputs {
@@ -532,13 +586,16 @@ select:focus {
 }
 
 .bottom-box {
-  border: 2px solid blue;
+  border-top: 1px solid #a59b9b;
+  border-bottom: 1px solid #a59b9b;
   display: flex;
   flex-grow: 1;
   flex-direction: column;
   overflow-y: auto;
   min-height: 0px;
-
+  margin: 3px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
   width: 100%;
 }
 
