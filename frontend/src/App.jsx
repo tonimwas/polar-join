@@ -281,19 +281,46 @@ function App() {
   };
 
   // CSV download helper
-  const downloadCSV = (points) => {
-    const rows = [
-      ['Name', 'Easting', 'Northing'],
-      ...points.map(pt => [pt.name || 'Unnamed', pt.e, pt.n])
-    ];
-    const csvContent = rows.map(e => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'points.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+  const downloadCSV = async (points) => {
+    try {
+      const rows = [
+        ['Name', 'Easting', 'Northing'],
+        ...points.map(pt => [pt.name || 'Unnamed', pt.e, pt.n])
+      ];
+      const csvContent = rows.map(e => e.join(",")).join("\n");
+      
+      // Check if running in Android WebView
+      if (window.AndroidWebView) {
+        try {
+          // Call Android method to save file
+          const fileName = `PolarJoin_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+          const result = window.AndroidWebView.saveFile(fileName, csvContent);
+          alert(`File saved to /Download/PolarJoin/${fileName}`);
+          return;
+        } catch (err) {
+          console.error('Error saving via Android WebView:', err);
+          // Fall through to regular download
+        }
+      }
+      
+      // Fallback for web browsers
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PolarJoin_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // Show notification
+      alert('File downloaded to your Downloads folder');
+      
+    } catch (error) {
+      console.error('Error saving file:', error);
+      alert('Error saving file. Please try again.');
+    }
   };
 
   // Helper to check for duplicate single points
