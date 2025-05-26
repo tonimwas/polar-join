@@ -600,6 +600,37 @@ width: 100%;
 }
 
 /* Footer */
+.delta-results {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+}
+
+.delta-results > div {
+  margin-bottom: 8px;
+}
+
+.delta-results div[style*="font-weight: bold"] {
+  color: #333;
+  font-size: 0.9em;
+}
+
+.delta-results > div > div:last-child {
+  font-family: monospace;
+  font-size: 1.1em;
+  color: #2c3e50;
+  background-color: #f1f3f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+  min-width: 80px;
+  text-align: center;
+}
+
 .app-footer {
   background-color: #FF69B4;
   padding: 10px 0;

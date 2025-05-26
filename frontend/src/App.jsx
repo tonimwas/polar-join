@@ -9,30 +9,88 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   : 'http://localhost:8000';  // In development, use local server URL
 
 function App() {
+  // Load saved form state from localStorage on initial render
+  const loadFormState = () => {
+    const savedState = localStorage.getItem('polarJoinFormState');
+    if (savedState) {
+      try {
+        return JSON.parse(savedState);
+      } catch (e) {
+        console.error('Failed to parse saved form state', e);
+      }
+    }
+    return {
+      type: 'polar',
+      distance: '',
+      angle: '',
+      useAzimuth: false,
+      degrees: '',
+      minutes: '',
+      seconds: '',
+      ea: '',
+      na: '',
+      eb: '',
+      nb: '',
+      nameA: '',
+      nameB: '',
+      polarEa: '',
+      polarNa: '',
+      polarNameA: '',
+      polarEndName: ''
+    };
+  };
   const [precision, setPrecision] = useState(2);
   const [endpointNameError, setEndpointNameError] = useState(false);
-  const [form, setForm] = useState({
-    type: 'polar',
-    distance: '',
-    angle: '',
-    useAzimuth: false,
-    degrees: '',
-    minutes: '',
-    seconds: '',
-    ea: '',
-    na: '',
-    eb: '',
-    nb: '',
-    nameA: '',
-    nameB: '',
-    polarEa: '',
-    polarNa: '',
-    polarNameA: '',
-    polarEndName: ''
-  });
+  const [form, setForm] = useState(() => loadFormState());
+  
+  // Save form state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('polarJoinFormState', JSON.stringify(form));
+  }, [form]);
+  
+  const clearForm = () => {
+    if (window.confirm('Are you sure you want to clear all inputs?')) {
+      const newForm = {
+        type: form.type, // Keep the current tab
+        distance: '',
+        angle: '',
+        useAzimuth: form.useAzimuth, // Keep the current angle type
+        degrees: '',
+        minutes: '',
+        seconds: '',
+        ea: '',
+        na: '',
+        eb: '',
+        nb: '',
+        nameA: '',
+        nameB: '',
+        polarEa: '',
+        polarNa: '',
+        polarNameA: '',
+        polarEndName: ''
+      };
+      setForm(newForm);
+      setResult(null);
+      setError(null);
+      
+      // Clear the form state from localStorage
+      localStorage.removeItem('polarJoinFormState');
+    }
+  };
 
-  const [savedPoints, setSavedPoints] = useState([]);
+  // Load saved points from localStorage on initial render
+  const loadSavedPoints = () => {
+    const saved = localStorage.getItem('savedPoints');
+    return saved ? JSON.parse(saved) : [];
+  };
+
+  const [savedPoints, setSavedPoints] = useState(loadSavedPoints());
   const [pendingDuplicate, setPendingDuplicate] = useState(null);
+  
+  // Save points to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('savedPoints', JSON.stringify(savedPoints));
+  }, [savedPoints]);
 
   const [showDMS, setShowDMS] = useState(false);
   const [result, setResult] = useState(null);
@@ -458,36 +516,62 @@ function App() {
           </div>
 
           <div className="precision-row">
-            <label htmlFor="precision-input" className="precision-label">Decimal Places:</label>
-            <input
-              id="precision-input"
-              type="number"
-              min="0"
-              max="10"
-              value={typeof precision === 'number' ? precision : ''}
-              onChange={e => {
-                const val = e.target.value;
-                // Allow blank or temporarily invalid input for editing
-                if (val === '') {
-                  setPrecision('');
-                  setError('Decimal places required');
-                  return;
-                }
-                // Only allow integers 0-10
-                const num = Number(val);
-                if (!Number.isInteger(num) || num < 0 || num > 10) {
-                  setPrecision(val);
-                  setError('Decimal places must be an integer 0-10');
-                  return;
-                }
-                setError(null);
-                setPrecision(num);
-              }}
-              className={`precision-input${error && error.toLowerCase().includes('decimal') ? ' input-error' : ''}`}
-              style={{ width: 50, marginLeft: 8, borderColor: error && error.toLowerCase().includes('decimal') ? 'red' : undefined }}
-              inputMode="numeric"
-              pattern="[0-9]*"
-            />
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <label htmlFor="precision-input" className="precision-label">Decimal Places:</label>
+              <input
+                id="precision-input"
+                type="number"
+                min="0"
+                max="10"
+                value={typeof precision === 'number' ? precision : ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  // Allow blank or temporarily invalid input for editing
+                  if (val === '') {
+                    setPrecision('');
+                    setError('Decimal places required');
+                    return;
+                  }
+                  // Only allow integers 0-10
+                  const num = Number(val);
+                  if (!Number.isInteger(num) || num < 0 || num > 10) {
+                    setPrecision(val);
+                    setError('Decimal places must be an integer 0-10');
+                    return;
+                  }
+                  setError(null);
+                  setPrecision(num);
+                }}
+                className={`precision-input${error && error.toLowerCase().includes('decimal') ? ' input-error' : ''}`}
+                style={{ 
+                  width: 50, 
+                  marginLeft: 8, 
+                  marginRight: 8,
+                  borderColor: error && error.toLowerCase().includes('decimal') ? 'red' : undefined 
+                }}
+                inputMode="numeric"
+                pattern="[0-9]*"
+              />
+              <button 
+                type="button" 
+                onClick={clearForm}
+                title="Clear all inputs"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#666',
+                  fontSize: '18px',
+                  lineHeight: 1
+                }}
+              >
+                🗑️
+              </button>
+            </div>
           </div>
 
           <div className="calculator-operations">
@@ -970,6 +1054,8 @@ function App() {
             </div>
           </div>
         </form>
+
+      
 
         <div className="bottom-box">
           {/* Saved Points Table */}
