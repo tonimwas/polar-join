@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import CartesianPlot from './CartesianPlot';
+import Calculations from './utils/calculations';
 
 // Configure API base URL
 const API_BASE_URL = process.env.NODE_ENV === 'production'
@@ -310,22 +311,19 @@ function App() {
   const handleTypeChange = (e) => {
     setForm({ ...form, type: e.target.value });
     setResult(null);
-    setError(null);
-    setEndpointCoords({ e: null, n: null }); // Reset endpoint coordinates when switching tabs
-    setSavedStatus(prev => ({ ...prev, polarEnd: false })); // Reset endpoint saved status
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setResult(null);
 
-    // Validate required fields
-    if (form.type === 'polar' && !form.distance) {
-      setError('Please enter a distance');
-      return;
-    }
-
+    // Validate required fields based on calculation type
     if (form.type === 'polar') {
+      if (!form.distance) {
+        setError('Please enter a distance');
+        return;
+      }
       if (form.useAzimuth) {
         if (
           form.degrees === '' || form.degrees === null ||
@@ -335,14 +333,34 @@ function App() {
           setError('Please enter all DMS values (Degrees, Minutes, Seconds)');
           return;
         }
-      } else {
-        if (!form.angle) {
-          setError('Please enter an angle from East');
-          return;
-        }
+      } else if (!form.angle) {
+        setError('Please enter an angle from East');
+        return;
+      }
+    } else if (form.type === 'join') {
+      if (!form.ea || !form.na || !form.eb || !form.nb) {
+        setError('Please enter all coordinate values for both points');
+        return;
       }
     }
 
+    // Prepare form data
+    const formData = {
+      ...form,
+      type: form.type,
+      useAzimuth: form.useAzimuth,
+      distance: parseFloat(form.distance || 0),
+      angle: form.useAzimuth ? null : parseFloat(form.angle || 0),
+      degrees: form.useAzimuth ? parseFloat(form.degrees || 0) : 0,
+      minutes: form.useAzimuth ? parseFloat(form.minutes || 0) : 0,
+      seconds: form.useAzimuth ? parseFloat(form.seconds || 0) : 0,
+      ea: parseFloat(form.ea || 0),
+      na: parseFloat(form.na || 0),
+      eb: parseFloat(form.eb || 0),
+      nb: parseFloat(form.nb || 0)
+    };
+
+    // Try to use the server first, fall back to local calculations if it fails
     try {
       const response = await fetch(`${API_BASE_URL}/api/calculate/`, {
         method: 'POST',
@@ -350,36 +368,51 @@ function App() {
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify({
-          ...form,
-          type: form.type,
-          useAzimuth: form.useAzimuth,
-          distance: parseFloat(form.distance),
-          angle: form.useAzimuth ? null : parseFloat(form.angle),
-          degrees: form.useAzimuth ? parseFloat(form.degrees === '' ? '0' : form.degrees) : null,
-          minutes: form.useAzimuth ? parseFloat(form.minutes === '' ? '0' : form.minutes) : null,
-          seconds: form.useAzimuth ? parseFloat(form.seconds === '' ? '0' : form.seconds) : null,
-        }),
+        body: JSON.stringify(formData),
       });
-      const data = await response.json();
+      
       if (response.ok) {
+        const data = await response.json();
         setResult(data.result);
+        console.log('Used server calculation');
+        return; // Success, exit the function
       } else {
-        setError(data.error || 'Calculation failed');
+        // If server returns an error, try local calculation
+        console.log('Server returned an error, trying local calculation...');
       }
     } catch (err) {
-      setError('Network error: Could not connect to server');
+      console.log('Network error, trying local calculation...');
     }
-  };
 
-  // Utility for DMS formatting
-  function toDMS(angle) {
-    const deg = Math.floor(Math.abs(angle));
-    const minFloat = (Math.abs(angle) - deg) * 60;
-    const min = Math.floor(minFloat);
-    const sec = ((minFloat - min) * 60).toFixed(2);
-    const sign = angle < 0 ? '-' : '';
-    return `${sign}${deg}° ${min}' ${sec}\"`;
+    // Local calculation fallback
+    try {
+      let localResult;
+      
+      if (form.type === 'polar') {
+        localResult = Calculations.calculatePolar(
+          formData.distance,
+          formData.useAzimuth,
+          formData.degrees,
+          formData.minutes,
+          formData.seconds,
+          formData.angle
+        );
+      } else {
+        localResult = Calculations.calculateJoin(
+          formData.ea,
+          formData.na,
+          formData.eb,
+          formData.nb
+        );
+      }
+      
+      // Format the result to match the server response
+      setResult(localResult);
+      console.log('Used local calculation');
+    } catch (localErr) {
+      console.error('Local calculation error:', localErr);
+      setError('Failed to perform calculation. Please check your inputs and try again.');
+    }
   }
 
   return (
@@ -486,7 +519,16 @@ function App() {
 
                         <div className="result-section">
                           <h4>Bearings</h4>
-                          <p><strong>Azimuth (from North, clockwise):</strong></p><p> {toDMS(result.azimuth)}</p>
+                          <p><strong>Azimuth (from North, clockwise):</strong></p>
+                          <p>
+                            {result.azimuth !== undefined
+                              ? Calculations.formatDMS(
+                                  Calculations.toDMS(result.azimuth).degrees,
+                                  Calculations.toDMS(result.azimuth).minutes,
+                                  Calculations.toDMS(result.azimuth).seconds
+                                )
+                              : 'N/A'}
+                          </p>
                           <p><strong>Bearing from East (math angle):</strong></p><p> {Number(result.bearing_from_east).toFixed(precision)}°</p>
                         </div>
                       </>
@@ -567,7 +609,6 @@ function App() {
                       />
                     </div>
                   </div>
-
                   <div className='distancebox'>
                     <label htmlFor="distance">Distance:</label>
                     <input
