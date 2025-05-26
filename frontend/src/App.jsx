@@ -378,7 +378,7 @@ function App() {
 
   const handleTypeChange = (e) => {
     setForm({ ...form, type: e.target.value });
-    setResult(null);
+    // Don't clear results when switching tabs
   };
 
   const handleSubmit = async (e) => {
@@ -422,10 +422,12 @@ function App() {
       degrees: form.useAzimuth ? parseFloat(form.degrees || 0) : 0,
       minutes: form.useAzimuth ? parseFloat(form.minutes || 0) : 0,
       seconds: form.useAzimuth ? parseFloat(form.seconds || 0) : 0,
-      ea: form.polarEa ? parseFloat(form.polarEa) : 0,
-      na: form.polarNa ? parseFloat(form.polarNa) : 0,
-      eb: parseFloat(form.eb || 0),
-      nb: parseFloat(form.nb || 0)
+      // For polar calculations, use polarEa/polarNa as starting point if provided
+      ea: form.type === 'polar' ? (form.polarEa ? parseFloat(form.polarEa) : 0) : parseFloat(form.ea || 0),
+      na: form.type === 'polar' ? (form.polarNa ? parseFloat(form.polarNa) : 0) : parseFloat(form.na || 0),
+      // For join calculations, ensure we're using the correct point order
+      eb: form.type === 'join' ? parseFloat(form.eb || 0) : 0,
+      nb: form.type === 'join' ? parseFloat(form.nb || 0) : 0
     };
 
     // Try to use the server first, fall back to local calculations if it fails
@@ -613,7 +615,7 @@ function App() {
                           <div className='dist'><h4>Distance:</h4> <p>{Number(result.distance).toFixed(precision)} m</p></div>
                         </div>
 
-                        {usingServer && result.azimuth !== undefined && (
+                        {(usingServer || form.type === 'join') && result.azimuth !== undefined && (
                           <div className="result-section">
                             <h4>Bearings</h4>
                             <p><strong>Azimuth (from North, clockwise):</strong></p>
@@ -656,6 +658,7 @@ function App() {
                                 setError(null);
                               } else {
                                 setForm(f => ({ ...f, polarNameA: '', polarEa: '', polarNa: '' }));
+                                setError(null);
                               }
                             }}
                           >
@@ -913,16 +916,20 @@ function App() {
                         <label htmlFor="nameA">Point A </label>
                         <select
                           className="point-select"
-                          value={savedPoints.findIndex(pt => pt.name === form.nameA)}
+                          value={form.nameA ? (savedPoints.findIndex(pt => pt.name === form.nameA) >= 0 ? savedPoints.findIndex(pt => pt.name === form.nameA) : '') : ''}
                           onChange={e => {
-                            const idx = Number(e.target.value);
-                            if (!isNaN(idx)) {
+                            const idx = e.target.value === '' ? -1 : Number(e.target.value);
+                            if (idx >= 0 && idx < savedPoints.length) {
                               const pt = savedPoints[idx];
-                              if (pt.name === form.nameB) {
+                              if (pt.name.trim() === form.nameB.trim()) {
                                 setError(`Please choose another point. '${pt.name || 'Unnamed'}' is already input for B`);
                                 return;
                               }
                               setForm(f => ({ ...f, nameA: pt.name, ea: pt.e, na: pt.n }));
+                              setSavedStatus(prev => ({ ...prev, A: false }));
+                              setError(null);
+                            } else if (e.target.value === '') {
+                              setForm(f => ({ ...f, nameA: '', ea: '', na: '' }));
                               setSavedStatus(prev => ({ ...prev, A: false }));
                               setError(null);
                             }
@@ -984,17 +991,21 @@ function App() {
                         <label htmlFor="nameB">Point B </label>
                         <select
                           className="point-select"
-                          value={savedPoints.findIndex(pt => pt.name === form.nameB)}
+                          value={form.nameB ? (savedPoints.findIndex(pt => pt.name === form.nameB) >= 0 ? savedPoints.findIndex(pt => pt.name === form.nameB) : '') : ''}
                           onChange={e => {
-                            const idx = Number(e.target.value);
-                            if (!isNaN(idx)) {
+                            const idx = e.target.value === '' ? -1 : Number(e.target.value);
+                            if (idx >= 0 && idx < savedPoints.length) {
                               const pt = savedPoints[idx];
-                              if (pt.name === form.nameA) {
+                              if (pt.name.trim() === form.nameA.trim()) {
                                 setError(`Please choose another point. '${pt.name || 'Unnamed'}' is already input for A`);
                                 return;
                               }
                               setForm(f => ({ ...f, nameB: pt.name, eb: pt.e, nb: pt.n }));
                               setSavedStatus(prev => ({ ...prev, B: true }));
+                              setError(null);
+                            } else if (e.target.value === '') {
+                              setForm(f => ({ ...f, nameB: '', eb: '', nb: '' }));
+                              setSavedStatus(prev => ({ ...prev, B: false }));
                               setError(null);
                             }
                           }}

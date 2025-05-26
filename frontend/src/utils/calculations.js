@@ -84,19 +84,22 @@ const Calculations = {
     eb = parseFloat(eb) || 0;
     nb = parseFloat(nb) || 0;
     
+    // Calculate differences
     const delta_e = eb - ea;
     const delta_n = nb - na;
     
-    // Calculate distance
+    // Calculate distance (always positive)
     const distance = Math.sqrt(delta_e ** 2 + delta_n ** 2);
     
     // Calculate angle from East (mathematical angle)
+    // Use atan2 to get the correct quadrant
     let bearingFromEast = Math.atan2(delta_n, delta_e) * 180 / Math.PI;
     
     // Normalize bearing_from_east to [0, 360)
     bearingFromEast = (bearingFromEast + 360) % 360;
     
     // Calculate azimuth (full-circle from North, clockwise)
+    // Ensure azimuth is in range [0, 360)
     const azimuth = (90 - bearingFromEast + 360) % 360;
     
     // Convert azimuth to DMS for display
