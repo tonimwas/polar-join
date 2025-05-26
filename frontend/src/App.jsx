@@ -23,7 +23,7 @@ function App() {
       type: 'polar',
       distance: '',
       angle: '',
-      useAzimuth: false,
+      useAzimuth: true, // Set azimuth as default
       degrees: '',
       minutes: '',
       seconds: '',
@@ -51,10 +51,10 @@ function App() {
   const clearForm = () => {
     if (window.confirm('Are you sure you want to clear all inputs?')) {
       const newForm = {
-        type: form.type, // Keep the current tab
+        type: 'polar', // Reset to polar tab
         distance: '',
         angle: '',
-        useAzimuth: form.useAzimuth, // Keep the current angle type
+        useAzimuth: true, // Reset to azimuth
         degrees: '',
         minutes: '',
         seconds: '',
@@ -72,9 +72,11 @@ function App() {
       setForm(newForm);
       setResult(null);
       setError(null);
+      setSavedPoints([]); // Clear saved points from state
       
-      // Clear the form state from localStorage
+      // Clear both form state and saved points from localStorage
       localStorage.removeItem('polarJoinFormState');
+      localStorage.removeItem('savedPoints');
     }
   };
 
@@ -94,6 +96,7 @@ function App() {
 
   const [showDMS, setShowDMS] = useState(false);
   const [result, setResult] = useState(null);
+  const [usingServer, setUsingServer] = useState(false);
   const [error, setError] = useState(null);
   const [savedStatus, setSavedStatus] = useState({ A: false, B: false, polarEnd: false }); // To track save icon state
   const [endpointCoords, setEndpointCoords] = useState({ e: null, n: null }); // Track endpoint coordinates
@@ -439,6 +442,7 @@ function App() {
       if (response.ok) {
         const data = await response.json();
         setResult(data.result);
+        setUsingServer(true);
         console.log('Used server calculation');
         return; // Success, exit the function
       } else {
@@ -450,6 +454,7 @@ function App() {
     }
 
     // Local calculation fallback
+    setUsingServer(false);
     try {
       let localResult;
       
@@ -498,7 +503,7 @@ function App() {
               tabIndex="-1"
               style={{ outline: 'none' }}
             >
-              Polar 
+              Polar ❄
             </button>
             
             <button
@@ -511,7 +516,7 @@ function App() {
               tabIndex="-1"
               style={{ outline: 'none' }}
             >
-              Join
+              Join 🔗
             </button>
           </div>
 
@@ -569,7 +574,7 @@ function App() {
                   lineHeight: 1
                 }}
               >
-                🗑️
+                🗑️🧹
               </button>
             </div>
           </div>
@@ -598,8 +603,8 @@ function App() {
                           <div className="result-section">
                             <h4>Results:</h4>
                             <h4>Change in Eastings and Northings</h4>
-                            <p><strong>ΔE :</strong> {Number(result.delta_e).toFixed(2)} </p>
-                            <p><strong>ΔN :</strong> {Number(result.delta_n).toFixed(2)} </p>
+                            <p><strong>ΔE :</strong> {Number(result.delta_e).toFixed(precision)} m</p>
+                            <p><strong>ΔN :</strong> {Number(result.delta_n).toFixed(precision)} m</p>
                           </div>
                         )}
 
@@ -608,20 +613,21 @@ function App() {
                           <div className='dist'><h4>Distance:</h4> <p>{Number(result.distance).toFixed(precision)} m</p></div>
                         </div>
 
-                        <div className="result-section">
-                          <h4>Bearings</h4>
-                          <p><strong>Azimuth (from North, clockwise):</strong></p>
-                          <p>
-                            {result.azimuth !== undefined
-                              ? Calculations.formatDMS(
-                                  Calculations.toDMS(result.azimuth).degrees,
-                                  Calculations.toDMS(result.azimuth).minutes,
-                                  Calculations.toDMS(result.azimuth).seconds
-                                )
-                              : 'N/A'}
-                          </p>
-                          <p><strong>Bearing from East (math angle):</strong></p><p> {Number(result.bearing_from_east).toFixed(precision)}°</p>
-                        </div>
+                        {usingServer && result.azimuth !== undefined && (
+                          <div className="result-section">
+                            <h4>Bearings</h4>
+                            <p><strong>Azimuth (from North, clockwise):</strong></p>
+                            <p>
+                              {Calculations.formatDMS(
+                                Calculations.toDMS(result.azimuth).degrees,
+                                Calculations.toDMS(result.azimuth).minutes,
+                                Calculations.toDMS(result.azimuth).seconds
+                              )}
+                            </p>
+                            <p><strong>Bearing from East (math angle):</strong></p>
+                            <p>{Number(result.bearing_from_east).toFixed(precision)}°</p>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
