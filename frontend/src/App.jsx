@@ -42,12 +42,12 @@ function App() {
   const [precision, setPrecision] = useState(2);
   const [endpointNameError, setEndpointNameError] = useState(false);
   const [form, setForm] = useState(() => loadFormState());
-  
+
   // Save form state to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('polarJoinFormState', JSON.stringify(form));
   }, [form]);
-  
+
   const clearForm = () => {
     if (window.confirm('Are you sure you want to clear all inputs?')) {
       const newForm = {
@@ -73,7 +73,7 @@ function App() {
       setResult(null);
       setError(null);
       setSavedPoints([]); // Clear saved points from state
-      
+
       // Clear both form state and saved points from localStorage
       localStorage.removeItem('polarJoinFormState');
       localStorage.removeItem('savedPoints');
@@ -88,7 +88,7 @@ function App() {
 
   const [savedPoints, setSavedPoints] = useState(loadSavedPoints());
   const [pendingDuplicate, setPendingDuplicate] = useState(null);
-  
+
   // Save points to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('savedPoints', JSON.stringify(savedPoints));
@@ -324,14 +324,14 @@ function App() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     const newForm = { ...form, [name]: value };
-    
+
     // Check if coordinates match any saved point
     if (['ea', 'na', 'eb', 'nb'].includes(name)) {
       // Check for point A
       if (['ea', 'na'].includes(name)) {
         const matchingPoint = savedPoints.find(
-          pt => Number(pt.e).toFixed(3) === Number(newForm.ea).toFixed(3) && 
-               Number(pt.n).toFixed(3) === Number(newForm.na).toFixed(3)
+          pt => Number(pt.e).toFixed(3) === Number(newForm.ea).toFixed(3) &&
+            Number(pt.n).toFixed(3) === Number(newForm.na).toFixed(3)
         );
         if (matchingPoint) {
           // If coordinates match a saved point, set the name and mark as saved
@@ -345,12 +345,12 @@ function App() {
           setSavedStatus(prev => ({ ...prev, A: false }));
         }
       }
-      
+
       // Check for point B
       if (['eb', 'nb'].includes(name)) {
         const matchingPoint = savedPoints.find(
-          pt => Number(pt.e).toFixed(3) === Number(newForm.eb).toFixed(3) && 
-               Number(pt.n).toFixed(3) === Number(newForm.nb).toFixed(3)
+          pt => Number(pt.e).toFixed(3) === Number(newForm.eb).toFixed(3) &&
+            Number(pt.n).toFixed(3) === Number(newForm.nb).toFixed(3)
         );
         if (matchingPoint) {
           // If coordinates match a saved point, set the name and mark as saved
@@ -365,14 +365,14 @@ function App() {
         }
       }
     }
-    
+
     setForm(newForm);
-    
+
     // Reset endpoint save status for polar tab if relevant fields change
     if (['polarEndName', 'polarEa', 'polarNa', 'distance', 'angle', 'degrees', 'minutes', 'seconds'].includes(name)) {
       setSavedStatus(prev => ({ ...prev, polarEnd: false }));
     }
-    
+
     setError(null); // Clear error on input change
   };
 
@@ -440,7 +440,7 @@ function App() {
         },
         body: JSON.stringify(formData),
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setResult(data.result);
@@ -459,7 +459,7 @@ function App() {
     setUsingServer(false);
     try {
       let localResult;
-      
+
       if (form.type === 'polar') {
         localResult = Calculations.calculatePolar(
           formData.distance,
@@ -477,7 +477,7 @@ function App() {
           formData.nb
         );
       }
-      
+
       // Format the result to match the server response
       setResult(localResult);
       console.log('Used local calculation');
@@ -507,7 +507,7 @@ function App() {
             >
               Polar ❄
             </button>
-            
+
             <button
               type="button"
               className={`tab-button ${form.type === 'join' ? 'active' : ''}`}
@@ -550,17 +550,17 @@ function App() {
                   setPrecision(num);
                 }}
                 className={`precision-input${error && error.toLowerCase().includes('decimal') ? ' input-error' : ''}`}
-                style={{ 
-                  width: 50, 
-                  marginLeft: 8, 
+                style={{
+                  width: 50,
+                  marginLeft: 8,
                   marginRight: 8,
-                  borderColor: error && error.toLowerCase().includes('decimal') ? 'red' : undefined 
+                  borderColor: error && error.toLowerCase().includes('decimal') ? 'red' : undefined
                 }}
                 inputMode="numeric"
                 pattern="[0-9]*"
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={clearForm}
                 title="Clear all inputs"
                 style={{
@@ -1072,7 +1072,7 @@ function App() {
           </div>
         </form>
 
-      
+
 
         <div className="bottom-box">
           {/* Saved Points Table */}
@@ -1132,9 +1132,9 @@ function App() {
         <div className="footer-content">
           <p>© {new Date().getFullYear()} Polar & Join Calculator v1.0.0</p>
           <div className="footer-links">
-            <a href="#" onClick={(e) => { e.preventDefault(); /* Add about action */ }}>About</a>
+            <a href="https://www.linkedin.com/in/anthony-michael-toni" target="_blank" rel="noopener noreferrer">About</a>
             <span className="divider">|</span>
-            <a href="#" onClick={(e) => { e.preventDefault(); /* Add help action */ }}>Help</a>
+            <a href="https://www.linkedin.com/in/anthony-michael-toni" target="_blank" rel="noopener noreferrer">Help</a>
           </div>
         </div>
       </footer>

@@ -68,7 +68,7 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
       const minX = 0, maxX = 10, minY = 0, maxY = 10;
       drawCoordinateSystem(ctx, padding, width, height, minX, maxX, minY, maxY);
     }
-  }, [data]);
+  }, [data, precision]); // Added precision to dependency array
   
   // Helper function to draw the coordinate system
   function drawCoordinateSystem(ctx, padding, width, height, minX, maxX, minY, maxY) {
@@ -153,7 +153,7 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
 
     // Draw point A if defined
     if (pointA.defined) {
-      // Format coordinates for display
+      // Format coordinates for display with specified precision
       const labelA = `${nameA || 'A'} (${pointA.x.toFixed(precision)}, ${pointA.y.toFixed(precision)})`;
       const x = padding + (pointA.x - minX) / (maxX - minX) * width;
       const y = padding + height - (pointA.y - minY) / (maxY - minY) * height;
@@ -227,20 +227,20 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
       // Calculate angle of the line on the canvas
       const angleRad = Math.atan2(endY - startY, endX - startX);
       
-      // Distance between points in world coordinates
+      // Distance between points in world coordinates, formatted with specified precision
       const dist = Math.sqrt(Math.pow(pointB.x - pointA.x, 2) + Math.pow(pointB.y - pointA.y, 2));
       
       // Azimuth calculation (from North, clockwise)
       let azimuthDeg = 90 - Math.atan2(pointB.y - pointA.y, pointB.x - pointA.x) * 180 / Math.PI;
       if (azimuthDeg < 0) azimuthDeg += 360;
       
-      // Format azimuth as DMS
+      // Format azimuth as DMS with specified precision
       function toDMS(deg) {
         const d = Math.floor(deg);
         const m = Math.floor((deg - d) * 60);
         const s = ((deg - d) * 60 - m) * 60;
         
-        // Use 2 decimal places for seconds as it's standard for DMS
+        // Use specified precision for seconds
         return `${d}°${m}'${s.toFixed(precision)}"`;
       }
       const azimuthDMS = toDMS(azimuthDeg);
@@ -261,68 +261,57 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
       const belowX = midX - offsetDistance * Math.cos(perpAngle);
       const belowY = midY - offsetDistance * Math.sin(perpAngle);
       
-      // Determine if we need to flip the text to avoid upside-down labels
-      // If azimuth exceeds 180 degrees, labels would appear upside down
-      const shouldFlip = azimuthDeg > 180 && azimuthDeg < 360;
+      // Determine if the line is in the rightward direction (azimuth between 270° and 90°)
+      const isRightward = (azimuthDeg > 270 && azimuthDeg <= 360) || (azimuthDeg >= 0 && azimuthDeg <= 90);
       
-      // Adjust rotation angle if needed (for readability)
+      // Adjust rotation angle and text alignment based on direction
       let textAngleRad = angleRad;
-      if (shouldFlip) {
-        // Add 180 degrees (PI radians) to flip text right-side up
-        textAngleRad = angleRad + Math.PI;
+      let textAlign = 'center';
+      let textBaseline = 'middle';
+      
+      // For rightward lines (270°-90°), we'll flip the text for better readability
+      if (isRightward) {
+        textAngleRad = angleRad + Math.PI; // Rotate 180 degrees
       }
       
-      // Position labels intelligently based on azimuth
-      if (!shouldFlip) {
-        // NORMAL CASE (0-180°): Distance above, Azimuth below
-        
-        // Draw DISTANCE above the line
-        ctx.save();
-        ctx.translate(aboveX, aboveY);
-        ctx.rotate(textAngleRad);
-        ctx.font = '17.5px calibri';
-        ctx.fillStyle = '#1C39BB';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`Distance: ${dist.toFixed(precision)}`, 0, 0);
-        ctx.restore();
-        
-        // Draw AZIMUTH below the line
-        ctx.save();
-        ctx.translate(belowX, belowY);
-        ctx.rotate(textAngleRad);
-        ctx.font = '17.5px calibri';
-        ctx.fillStyle = '#1C39BB';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`Azimuth: ${azimuthDMS}`, 0, 0);
-        ctx.restore();
-      } else {
-        // FLIPPED CASE (180-360°): Azimuth above, Distance below
-        // This maintains readability when line direction is reversed
-        
-        // Draw AZIMUTH above the line (swapped)
-        ctx.save();
-        ctx.translate(aboveX, aboveY);
-        ctx.rotate(textAngleRad);
-        ctx.font = '17.5px calibri';
-        ctx.fillStyle = '#1C39BB';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`Azimuth: ${azimuthDMS}`, 0, 0);
-        ctx.restore();
-        
-        // Draw DISTANCE below the line (swapped)
-        ctx.save();
-        ctx.translate(belowX, belowY);
-        ctx.rotate(textAngleRad);
-        ctx.font = '17.5px calibri';
-        ctx.fillStyle = '#1C39BB';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`Distance: ${dist.toFixed(precision)}`, 0, 0);
-        ctx.restore();
+      // Determine if we should rotate labels 180 degrees (for azimuths between 271°-360° and 0°-90°)
+      const shouldRotate180 = azimuthDeg <= 90 || azimuthDeg > 270;
+      
+      // Draw DISTANCE label
+      ctx.save();
+      ctx.translate(aboveX, aboveY);
+      // Apply 180° rotation for azimuths between 271°-360° and 0°-90°
+      ctx.rotate(shouldRotate180 ? textAngleRad + Math.PI : textAngleRad);
+      ctx.font = '17.5px calibri';
+      ctx.fillStyle = '#1C39BB';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Adjust position for rightward lines
+      if (isRightward) {
+        ctx.translate(0, shouldRotate180 ? 5 : -15);
       }
+      
+      ctx.fillText(`Distance: ${dist.toFixed(precision)}`, 0, 0);
+      ctx.restore();
+      
+      // Draw AZIMUTH label
+      ctx.save();
+      ctx.translate(belowX, belowY);
+      // Apply 180° rotation for azimuths between 271°-360° and 0°-90°
+      ctx.rotate(shouldRotate180 ? textAngleRad + Math.PI : textAngleRad);
+      ctx.font = '17.5px calibri';
+      ctx.fillStyle = '#1C39BB';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Adjust position for rightward lines
+      if (isRightward) {
+        ctx.translate(0, shouldRotate180 ? -5 : 15);
+      }
+      
+      ctx.fillText(`Azimuth: ${azimuthDMS}`, 0, 0);
+      ctx.restore();
     }
     
     ctx.restore();

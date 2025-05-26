@@ -5,6 +5,7 @@
   box-sizing: border-box;
   border-collapse: collapse;
   font-size: 12px;
+  
 }
 
 :root {
@@ -160,13 +161,60 @@ button:focus-visible {
 .precision-input,
 input[type="number"],
 input[type="text"],
-select {
+select,
+.point-select,
+.point-name-input {
   font-size: 12px;
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid #aaa;
   height: 1.5rem;
   box-sizing: border-box;
+  background-color: #fff;
+  color: #333;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: #333 !important;
+}
+
+select {
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='5'%3E%3Cpath fill='%23333' d='M0 0l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 10px 5px;
+  padding-right: 24px;
+}
+
+.saved-points-list {
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-top: 5px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.saved-point-item {
+  padding: 6px 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.saved-point-item:last-child {
+  border-bottom: none;
+}
+
+.saved-point-item:hover {
+  background-color: #f5f5f5;
 }
 
 input:focus,
@@ -437,12 +485,13 @@ width: 100%;
 }
 
 .saved-points-header {
-  background: #f0f0f0;
+  background: darkgray;
 }
 
 .saved-points-cell {
-  border: 1px solid #ccc;
+  border: 1px solid darkgray;
   padding: 2px;
+  color: black;
 }
 
 .saved-points-tbody {
