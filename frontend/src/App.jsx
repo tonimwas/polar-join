@@ -42,7 +42,7 @@ function App() {
 
   // Effect to update endpoint coordinates and endpoint save/tick logic
   useEffect(() => {
-    if (form.type === 'polar' && form.polarEa && form.polarNa) {
+    if (form.type === 'polar' && form.distance) {
       // Always recalculate endpoint from current inputs
       let delta_e = 0, delta_n = 0;
       if (result && typeof result.delta_e !== 'undefined' && typeof result.delta_n !== 'undefined') {
@@ -61,9 +61,16 @@ function App() {
         delta_e = distance * Math.cos(angleRad);
         delta_n = distance * Math.sin(angleRad);
       }
-      // Calculate endpoint coordinates with proper precision
-      const newEndE = (parseFloat(form.polarEa) + (delta_e || 0)).toFixed(precision);
-      const newEndN = (parseFloat(form.polarNa) + (delta_n || 0)).toFixed(precision);
+      // Calculate endpoint coordinates with proper precision if starting point is provided
+      let newEndE, newEndN;
+      if (form.polarEa && form.polarNa) {
+        newEndE = (parseFloat(form.polarEa) + (delta_e || 0)).toFixed(precision);
+        newEndN = (parseFloat(form.polarNa) + (delta_n || 0)).toFixed(precision);
+      } else {
+        // If no starting point, just show the delta values
+        newEndE = delta_e ? delta_e.toFixed(precision) : '0';
+        newEndN = delta_n ? delta_n.toFixed(precision) : '0';
+      }
       setEndpointCoords({ e: newEndE, n: newEndN });
 
       // Improved comparison to find matching saved point
@@ -354,8 +361,8 @@ function App() {
       degrees: form.useAzimuth ? parseFloat(form.degrees || 0) : 0,
       minutes: form.useAzimuth ? parseFloat(form.minutes || 0) : 0,
       seconds: form.useAzimuth ? parseFloat(form.seconds || 0) : 0,
-      ea: parseFloat(form.ea || 0),
-      na: parseFloat(form.na || 0),
+      ea: form.polarEa ? parseFloat(form.polarEa) : 0,
+      na: form.polarNa ? parseFloat(form.polarNa) : 0,
       eb: parseFloat(form.eb || 0),
       nb: parseFloat(form.nb || 0)
     };
@@ -547,20 +554,22 @@ function App() {
                     <div className="points-flex-container">
                       <div>
                         <div className="points-flex-row">
-                          <label htmlFor="polarNameA">Start Point</label>
+                          <label htmlFor="polarNameA">Start Point (Optional)</label>
                           <select
                             className="point-select"
                             value={savedPoints.findIndex(pt => pt.name === form.polarNameA)}
                             onChange={e => {
                               const idx = Number(e.target.value);
-                              if (!isNaN(idx)) {
+                              if (!isNaN(idx) && idx >= 0) {
                                 const pt = savedPoints[idx];
                                 setForm(f => ({ ...f, polarNameA: pt.name, polarEa: pt.e, polarNa: pt.n }));
                                 setError(null);
+                              } else {
+                                setForm(f => ({ ...f, polarNameA: '', polarEa: '', polarNa: '' }));
                               }
                             }}
                           >
-                            <option value="">Select</option>
+                            <option value="-1">Select or enter manually</option>
                             {savedPoints.map((pt, idx) => (
                               <option key={idx} value={idx}>{pt.name || 'Unnamed'}</option>
                             ))}
@@ -572,14 +581,15 @@ function App() {
                           name="polarNameA"
                           value={form.polarNameA}
                           onChange={e => setForm(f => ({ ...f, polarNameA: e.target.value }))}
-                          placeholder="Name"
+                          placeholder="Name (optional)"
                           className="point-name-input"
                         />
                       </div>
                       <span
                         className="save-icon"
                         title="Save Start Point"
-                        onClick={() => handleSavePoint(form.polarNameA, form.polarEa, form.polarNa, 'polarA')}
+                        onClick={() => form.polarEa && form.polarNa && handleSavePoint(form.polarNameA, form.polarEa, form.polarNa, 'polarA')}
+                        style={{ opacity: form.polarEa && form.polarNa ? 1 : 0.5 }}
                       >
                         {savedStatus.polarA ? '✔' : '📋'}
                       </span>
@@ -593,7 +603,7 @@ function App() {
                         value={form.polarEa}
                         onChange={e => setForm(f => ({ ...f, polarEa: e.target.value }))}
                         step="any"
-                        required
+                        placeholder="Starting E (X)"
                       />
                     </div>
                     <div>
@@ -605,7 +615,7 @@ function App() {
                         value={form.polarNa}
                         onChange={e => setForm(f => ({ ...f, polarNa: e.target.value }))}
                         step="any"
-                        required
+                        placeholder="Starting N (Y)"
                       />
                     </div>
                   </div>
