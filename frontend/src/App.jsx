@@ -288,33 +288,50 @@ function App() {
         ...points.map(pt => [pt.name || 'Unnamed', pt.e, pt.n])
       ];
       const csvContent = rows.map(e => e.join(",")).join("\n");
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const fileName = `SavedPoints_${timestamp}.csv`;
       
-      // Check if running in Android WebView
-      if (window.AndroidWebView) {
+      // Check if running in React Native
+      if (window.ReactNativeWebView) {
         try {
-          // Call Android method to save file
-          const fileName = `PolarJoin_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
-          const result = window.AndroidWebView.saveFile(fileName, csvContent);
-          alert(`File saved to /Download/PolarJoin/${fileName}`);
+          // Send message to React Native
+          window.ReactNativeWebView.postMessage(
+            JSON.stringify({
+              type: 'SAVE_CSV',
+              fileName,
+              content: csvContent
+            })
+          );
           return;
         } catch (err) {
-          console.error('Error saving via Android WebView:', err);
-          // Fall through to regular download
+          console.error('Error in React Native WebView:', err);
+          // Fall through to web implementation
         }
       }
       
-      // Fallback for web browsers
+      // Check if running in Android WebView (legacy)
+      if (window.AndroidWebView) {
+        try {
+          window.AndroidWebView.saveFile(fileName, csvContent);
+          alert(`File saved to /Download/PolarJoin/${fileName}`);
+          return;
+        } catch (err) {
+          console.error('Error in Android WebView:', err);
+          // Fall through to web implementation
+        }
+      }
+      
+      // Web browser implementation
       const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `PolarJoin_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      // Show notification
       alert('File downloaded to your Downloads folder');
       
     } catch (error) {
