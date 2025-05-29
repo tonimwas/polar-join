@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import CartesianPlot from './CartesianPlot';
 import Calculations from './utils/calculations';
+import { saveFile, detectPlatform } from './utils/fileUtils';
+import { Capacitor } from '@capacitor/core';
 
 // Configure API base URL
 const API_BASE_URL = process.env.NODE_ENV === 'production'
@@ -291,7 +293,30 @@ function App() {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const fileName = `SavedPoints_${timestamp}.csv`;
       
-      // Check if running in React Native
+      // Get platform information
+      const platform = detectPlatform();
+      
+      try {
+        // Use our unified file saving utility
+        const filePath = await saveFile(fileName, csvContent, 'text/csv');
+        
+        // Show appropriate message based on platform
+        if (platform.isAndroid) {
+          alert(`File saved to ${filePath}`);
+        } else {
+          alert('File downloaded to your Downloads folder');
+        }
+        
+        return;
+      } catch (err) {
+        console.error('Error using file utilities:', err);
+        
+        // Fall through to legacy implementations if our utility fails
+      }
+      
+      // Legacy implementations as fallback
+      
+      // Check if running in React Native WebView
       if (window.ReactNativeWebView) {
         try {
           // Send message to React Native
@@ -302,10 +327,10 @@ function App() {
               content: csvContent
             })
           );
+          alert('File saved to your device');
           return;
         } catch (err) {
           console.error('Error in React Native WebView:', err);
-          // Fall through to web implementation
         }
       }
       
@@ -317,11 +342,10 @@ function App() {
           return;
         } catch (err) {
           console.error('Error in Android WebView:', err);
-          // Fall through to web implementation
         }
       }
       
-      // Web browser implementation
+      // Web browser implementation as last resort
       const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
