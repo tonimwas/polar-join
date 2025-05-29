@@ -564,7 +564,7 @@ function App() {
     <div className="app-container">
       <div className="calculator-container">
         <div className="header-section">
-          <h1 className="header-title">Polar & Join Calculator</h1>
+          <h1 className="header-title">PJCalc</h1>
         </div>
         <form onSubmit={handleSubmit} className="calculator-form">
           <div className="tab-section">
