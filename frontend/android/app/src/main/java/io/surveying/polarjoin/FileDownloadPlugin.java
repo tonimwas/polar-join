@@ -46,8 +46,18 @@ public class FileDownloadPlugin extends Plugin {
     private String saveToDownloads(Context context, String fileName, String content) throws IOException {
         File downloadsDir;
         
-        // Create PolarJoin directory in public Downloads
+        // Always use the public Downloads directory
         downloadsDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "PolarJoin");
+        
+        // Ensure we have permission to write to external storage
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // For Android 10+, we might need additional handling, but we'll try the public directory first
+            if (!downloadsDir.exists() && !downloadsDir.mkdirs()) {
+                Log.w(TAG, "Failed to create public directory, falling back to app-specific directory");
+                // Fallback to app-specific directory only if we can't create the public directory
+                downloadsDir = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "PolarJoin");
+            }
+        }
 
         if (!downloadsDir.exists()) {
             boolean created = downloadsDir.mkdirs();

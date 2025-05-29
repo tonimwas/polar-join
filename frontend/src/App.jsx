@@ -302,7 +302,12 @@ function App() {
         
         // Show appropriate message based on platform
         if (platform.isAndroid) {
-          alert(`File saved to ${filePath}`);
+          // Format the path to be more user-friendly
+          const friendlyPath = filePath.includes('/storage/emulated/0/') 
+            ? filePath.replace('/storage/emulated/0/', '/sdcard/') 
+            : filePath;
+            
+          alert(`File saved to ${friendlyPath}\n\nYou can find it in your Downloads/PolarJoin folder`);
         } else {
           alert('File downloaded to your Downloads folder');
         }

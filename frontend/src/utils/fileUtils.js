@@ -91,29 +91,72 @@ export const saveFile = async (fileName, content, mimeType = 'text/csv') => {
         
         const { Filesystem, Directory } = window.Capacitor.Plugins;
         
+        // For Android, try to use the public Downloads directory
+        // We'll use the FileDownloadPlugin we created
+        if (typeof window.Capacitor.Plugins.FileDownload !== 'undefined') {
+          try {
+            const result = await window.Capacitor.Plugins.FileDownload.saveFile({
+              fileName,
+              content,
+              mimeType
+            });
+            
+            return result.filePath || '/storage/emulated/0/Download/PolarJoin/' + fileName;
+          } catch (err) {
+            console.error('Error using FileDownload plugin:', err);
+            // Fall through to standard Filesystem API
+          }
+        }
+        
+        // Fallback to standard Capacitor Filesystem API
         // Ensure the directory exists
         try {
           await Filesystem.mkdir({
             path: 'PolarJoin',
-            directory: Directory.Documents,
+            directory: Directory.External,  // Use External instead of Documents to access public storage
             recursive: true
           });
         } catch (e) {
           // Directory might already exist, that's fine
+          console.log('Directory creation result:', e);
         }
         
         // Write the file
-        const result = await Filesystem.writeFile({
-          path: `PolarJoin/${fileName}`,
-          data: content,
-          directory: Directory.Documents,
-          encoding: 'utf8'
-        });
-        
-        return `${Directory.Documents}/PolarJoin/${fileName}`;
+        try {
+          const result = await Filesystem.writeFile({
+            path: `PolarJoin/${fileName}`,
+            data: content,
+            directory: Directory.External,  // Use External instead of Documents
+            encoding: 'utf8'
+          });
+          
+          return `/storage/emulated/0/Download/PolarJoin/${fileName}`;
+        } catch (writeErr) {
+          console.error('Error writing to external storage:', writeErr);
+          
+          // Last resort: try Documents directory
+          try {
+            await Filesystem.mkdir({
+              path: 'PolarJoin',
+              directory: Directory.Documents,
+              recursive: true
+            });
+
+            const result = await Filesystem.writeFile({
+              path: `PolarJoin/${fileName}`,
+              data: content,
+              directory: Directory.Documents,
+              encoding: 'utf8'
+            });
+
+            return `${Directory.Documents}/PolarJoin/${fileName}`;
+          } catch (finalErr) {
+            console.error('Error writing to documents directory:', finalErr);
+            throw finalErr;
+          }
+        }
       }
     }
-    
     // Web implementation (fallback for all platforms)
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
@@ -124,7 +167,6 @@ export const saveFile = async (fileName, content, mimeType = 'text/csv') => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
     return 'Downloaded to your device';
   } catch (error) {
     console.error('Error saving file:', error);
