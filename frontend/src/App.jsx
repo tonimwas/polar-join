@@ -98,7 +98,9 @@ function App() {
 
   const [showDMS, setShowDMS] = useState(false);
   const [result, setResult] = useState(null);
-  const [usingServer, setUsingServer] = useState(false);
+  const [usingServer, setUsingServer] = useState(true);
+  const [isLogoRotating, setIsLogoRotating] = useState(false);
+  const logoRef = useRef(null);
   const [error, setError] = useState(null);
   const [savedStatus, setSavedStatus] = useState({ A: false, B: false, polarEnd: false }); // To track save icon state
   const [endpointCoords, setEndpointCoords] = useState({ e: null, n: null }); // Track endpoint coordinates
@@ -458,6 +460,9 @@ function App() {
     e.preventDefault();
     setError(null);
     setResult(null);
+    
+    // Start logo rotation
+    setIsLogoRotating(true);
 
     // Validate required fields based on calculation type
     if (form.type === 'polar') {
@@ -519,6 +524,8 @@ function App() {
         setResult(data.result);
         setUsingServer(true);
         console.log('Used server calculation');
+        // Stop logo rotation
+        setIsLogoRotating(false);
         return; // Success, exit the function
       } else {
         // If server returns an error, try local calculation
@@ -554,9 +561,14 @@ function App() {
       // Format the result to match the server response
       setResult(localResult);
       console.log('Used local calculation');
+      
+      // Stop logo rotation
+      setIsLogoRotating(false);
     } catch (localErr) {
       console.error('Local calculation error:', localErr);
       setError('Failed to perform calculation. Please check your inputs and try again.');
+      // Stop logo rotation on error
+      setIsLogoRotating(false);
     }
   }
 
@@ -565,6 +577,12 @@ function App() {
       <div className="calculator-container">
         <div className="header-section">
           <h1 className="header-title">PJCalc</h1>
+          <img 
+            ref={logoRef}
+            src="/polarlogo.png" 
+            alt="Polar Logo" 
+            className={`header-logo ${isLogoRotating ? 'rotating' : ''}`} 
+          />
         </div>
         <form onSubmit={handleSubmit} className="calculator-form">
           <div className="tab-section">

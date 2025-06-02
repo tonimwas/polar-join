@@ -168,7 +168,45 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
       ctx.font = `bold ${labelFontSize}px Arial`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText((nameA && nameA.trim()) ? nameA : 'A', x, y - 15);
+      
+      // Calculate angle to point B if it exists, otherwise use a default offset
+      let labelOffsetX = 0;
+      let labelOffsetY = -15; // Default offset upward
+      
+      if (pointB.defined && (pointA.x !== pointB.x || pointA.y !== pointB.y)) {
+        // Calculate angle from A to B
+        const angleRad = Math.atan2(pointB.y - pointA.y, pointB.x - pointA.x);
+        
+        // Calculate azimuth angle (from North, clockwise)
+        let azimuthDeg = 90 - angleRad * 180 / Math.PI;
+        if (azimuthDeg < 0) azimuthDeg += 360;
+        
+        // Determine which quadrant the line is in and adjust perpendicular angle accordingly
+        let perpAngle;
+        const labelDistance = 15;
+        
+        // For all quadrants, ensure label is outside the line
+        if (azimuthDeg >= 0 && azimuthDeg < 90) {
+          // First quadrant: place label to the right
+          perpAngle = angleRad - Math.PI/2;
+        } else if (azimuthDeg >= 90 && azimuthDeg < 180) {
+          // Second quadrant: place label to the right
+          perpAngle = angleRad - Math.PI/2;
+        } else if (azimuthDeg >= 180 && azimuthDeg < 270) {
+          // Third quadrant: place label to the left
+          perpAngle = angleRad + Math.PI/2;
+        } else {
+          // Fourth quadrant: place label to the left
+          perpAngle = angleRad + Math.PI/2;
+        }
+        
+        // Apply the offset
+        labelOffsetX = labelDistance * Math.cos(perpAngle);
+        labelOffsetY = labelDistance * Math.sin(perpAngle);
+      }
+      
+      // Position label outside the line
+      ctx.fillText((nameA && nameA.trim()) ? nameA : 'A', x + labelOffsetX, y + labelOffsetY);
       // Draw coordinates: above normally, below if rightward
       const coordFontSize = Math.max(12, Math.floor(height * 0.07));  // dynamic coordinate font size
       ctx.font = `${coordFontSize}px Arial`;
@@ -199,7 +237,46 @@ function CartesianPlot({ data, type, nameA, nameB, precision = 3 }) {
       ctx.font = `bold ${labelFontSize}px Arial`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText((nameB && nameB.trim()) ? nameB : 'B', x, y - 15);
+      
+      // Calculate angle from B to A if it exists, otherwise use a default offset
+      let labelOffsetX = 0;
+      let labelOffsetY = -15; // Default offset upward
+      
+      if (pointA.defined && (pointA.x !== pointB.x || pointA.y !== pointB.y)) {
+        // Calculate angle from B to A
+        const angleRad = Math.atan2(pointA.y - pointB.y, pointA.x - pointB.x);
+        
+        // Calculate azimuth angle (from North, clockwise)
+        let azimuthDeg = 90 - angleRad * 180 / Math.PI;
+        if (azimuthDeg < 0) azimuthDeg += 360;
+        
+        // Determine which quadrant the line is in and adjust perpendicular angle accordingly
+        let perpAngle;
+        const labelDistance = 15;
+        
+        // For point B, we need to reverse the direction compared to point A
+        // to ensure the label is always outside the line
+        if (azimuthDeg >= 0 && azimuthDeg < 90) {
+          // First quadrant: place label to the left (opposite of point A)
+          perpAngle = angleRad + Math.PI/2;
+        } else if (azimuthDeg >= 90 && azimuthDeg < 180) {
+          // Second quadrant: place label to the left (opposite of point A)
+          perpAngle = angleRad + Math.PI/2;
+        } else if (azimuthDeg >= 180 && azimuthDeg < 270) {
+          // Third quadrant: place label to the right (opposite of point A)
+          perpAngle = angleRad - Math.PI/2;
+        } else {
+          // Fourth quadrant: place label to the right (opposite of point A)
+          perpAngle = angleRad - Math.PI/2;
+        }
+        
+        // Apply the offset
+        labelOffsetX = labelDistance * Math.cos(perpAngle);
+        labelOffsetY = labelDistance * Math.sin(perpAngle);
+      }
+      
+      // Position label outside the line
+      ctx.fillText((nameB && nameB.trim()) ? nameB : 'B', x + labelOffsetX, y + labelOffsetY);
       // Draw coordinates: below normally, above if rightward
       const coordFontSize = Math.max(14, Math.floor(height * 0.07));  // dynamic coordinate font size
       ctx.font = `${coordFontSize}px Arial`;
