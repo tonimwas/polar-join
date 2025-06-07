@@ -609,7 +609,8 @@ function App() {
               tabIndex="-1"
               style={{ outline: 'none' }}
             >
-              Join 🔗
+              Join ◉───◉
+
             </button>
           </div>
 
