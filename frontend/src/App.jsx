@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import CartesianPlot from './CartesianPlot';
+import BannerAd from './components/BannerAd';
 import Calculations from './utils/calculations';
 import { saveFile, detectPlatform } from './utils/fileUtils';
 import { Capacitor } from '@capacitor/core';
+import { AdMob } from '@capacitor-community/admob';
 
 // Configure API base URL
 const API_BASE_URL = process.env.NODE_ENV === 'production'
@@ -79,6 +81,8 @@ function App() {
       // Clear both form state and saved points from localStorage
       localStorage.removeItem('polarJoinFormState');
       localStorage.removeItem('savedPoints');
+
+
     }
   };
 
@@ -104,6 +108,40 @@ function App() {
   const [error, setError] = useState(null);
   const [savedStatus, setSavedStatus] = useState({ A: false, B: false, polarEnd: false }); // To track save icon state
   const [endpointCoords, setEndpointCoords] = useState({ e: null, n: null }); // Track endpoint coordinates
+
+  const [calculationCount, setCalculationCount] = useState(() => {
+    const savedCount = localStorage.getItem('calculationCount');
+    return savedCount ? parseInt(savedCount, 10) : 0;
+  });
+
+  // Prepare interstitial ad on component mount
+  useEffect(() => {
+    if (Capacitor.getPlatform() === 'web') return;
+
+    const prepareAd = async () => {
+      try {
+        await AdMob.prepareInterstitial({
+          adId: 'ca-app-pub-8025011479298297/5107557644',
+          isTesting: true, // IMPORTANT: Set to false for production
+        });
+      } catch (error) {
+        console.error('Error preparing interstitial ad:', error);
+      }
+    };
+
+    // Initialize AdMob if not already done
+    AdMob.initialize({
+      requestTrackingAuthorization: true,
+      initializeForTesting: true,
+    }).then(() => {
+      prepareAd();
+    }).catch(err => console.error("Error initializing AdMob for interstitial", err));
+  }, []);
+
+  // Save calculation count to localStorage
+  useEffect(() => {
+    localStorage.setItem('calculationCount', calculationCount.toString());
+  }, [calculationCount]);
 
   // Effect to update endpoint coordinates and endpoint save/tick logic
   useEffect(() => {
@@ -456,11 +494,36 @@ function App() {
     // Don't clear results when switching tabs
   };
 
+  const showInterstitialAd = async () => {
+    if (Capacitor.getPlatform() === 'web') return;
+
+    const newCount = calculationCount + 1;
+    setCalculationCount(newCount);
+
+    if (newCount > 0 && newCount % 5 === 0) {
+      try {
+        await AdMob.showInterstitial();
+      } catch (adError) {
+        console.error('Error showing interstitial ad:', adError);
+      } finally {
+        // Prepare the next ad regardless of whether the current one showed
+        try {
+          await AdMob.prepareInterstitial({
+            adId: 'ca-app-pub-8025011479298297/5107557644',
+            isTesting: true,
+          });
+        } catch (prepareError) {
+          console.error('Error preparing subsequent interstitial ad:', prepareError);
+        }
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setResult(null);
-    
+
     // Start logo rotation
     setIsLogoRotating(true);
 
@@ -468,6 +531,7 @@ function App() {
     if (form.type === 'polar') {
       if (!form.distance) {
         setError('Please enter a distance');
+        setIsLogoRotating(false);
         return;
       }
       if (form.useAzimuth) {
@@ -477,15 +541,18 @@ function App() {
           form.seconds === '' || form.seconds === null
         ) {
           setError('Please enter all DMS values (Degrees, Minutes, Seconds)');
+          setIsLogoRotating(false);
           return;
         }
       } else if (!form.angle) {
         setError('Please enter an angle from East');
+        setIsLogoRotating(false);
         return;
       }
     } else if (form.type === 'join') {
       if (!form.ea || !form.na || !form.eb || !form.nb) {
         setError('Please enter all coordinate values for both points');
+        setIsLogoRotating(false);
         return;
       }
     }
@@ -500,16 +567,14 @@ function App() {
       degrees: form.useAzimuth ? parseFloat(form.degrees || 0) : 0,
       minutes: form.useAzimuth ? parseFloat(form.minutes || 0) : 0,
       seconds: form.useAzimuth ? parseFloat(form.seconds || 0) : 0,
-      // For polar calculations, use polarEa/polarNa as starting point if provided
       ea: form.type === 'polar' ? (form.polarEa ? parseFloat(form.polarEa) : 0) : parseFloat(form.ea || 0),
       na: form.type === 'polar' ? (form.polarNa ? parseFloat(form.polarNa) : 0) : parseFloat(form.na || 0),
-      // For join calculations, ensure we're using the correct point order
       eb: form.type === 'join' ? parseFloat(form.eb || 0) : 0,
       nb: form.type === 'join' ? parseFloat(form.nb || 0) : 0
     };
 
-    // Try to use the server first, fall back to local calculations if it fails
     try {
+      // Try to use the server first
       const response = await fetch(`${API_BASE_URL}/api/calculate/`, {
         method: 'POST',
         headers: {
@@ -523,54 +588,48 @@ function App() {
         const data = await response.json();
         setResult(data.result);
         setUsingServer(true);
+        await showInterstitialAd();
         console.log('Used server calculation');
-        // Stop logo rotation
-        setIsLogoRotating(false);
-        return; // Success, exit the function
       } else {
-        // If server returns an error, try local calculation
-        console.log('Server returned an error, trying local calculation...');
+        // If server returns an error, fall back to local calculation
+        console.log('Server returned an error, falling back to local calculation...');
+        throw new Error('Server error'); // Force fallback to local
       }
     } catch (err) {
-      console.log('Network error, trying local calculation...');
-    }
-
-    // Local calculation fallback
-    setUsingServer(false);
-    try {
-      let localResult;
-
-      if (form.type === 'polar') {
-        localResult = Calculations.calculatePolar(
-          formData.distance,
-          formData.useAzimuth,
-          formData.degrees,
-          formData.minutes,
-          formData.seconds,
-          formData.angle
-        );
-      } else {
-        localResult = Calculations.calculateJoin(
-          formData.ea,
-          formData.na,
-          formData.eb,
-          formData.nb
-        );
+      // Network error or server error, fall back to local calculation
+      console.log('Network/server error, using local calculation...');
+      setUsingServer(false);
+      try {
+        let localResult;
+        if (form.type === 'polar') {
+          localResult = Calculations.calculatePolar(
+            formData.distance,
+            formData.useAzimuth,
+            formData.degrees,
+            formData.minutes,
+            formData.seconds,
+            formData.angle
+          );
+        } else {
+          localResult = Calculations.calculateJoin(
+            formData.ea,
+            formData.na,
+            formData.eb,
+            formData.nb
+          );
+        }
+        setResult(localResult);
+        await showInterstitialAd();
+        console.log('Used local calculation');
+      } catch (localErr) {
+        console.error('Local calculation error:', localErr);
+        setError('Failed to perform calculation. Please check your inputs and try again.');
       }
-
-      // Format the result to match the server response
-      setResult(localResult);
-      console.log('Used local calculation');
-      
-      // Stop logo rotation
-      setIsLogoRotating(false);
-    } catch (localErr) {
-      console.error('Local calculation error:', localErr);
-      setError('Failed to perform calculation. Please check your inputs and try again.');
-      // Stop logo rotation on error
+    } finally {
+      // Stop logo rotation regardless of outcome
       setIsLogoRotating(false);
     }
-  }
+  };
 
   return (
     <div className="app-container">
@@ -1222,13 +1281,17 @@ function App() {
       </div>
       <footer className="app-footer">
         <div className="footer-content">
-          <p>© {new Date().getFullYear()} Polar & Join Calculator v1.0.0</p>
+          <p> {new Date().getFullYear()} Polar & Join Calculator v1.0.0</p>
           <div className="footer-links">
             <a href="https://www.linkedin.com/in/anthony-michael-toni" target="_blank" rel="noopener noreferrer">About</a>
             <span className="divider">|</span>
             <a href="https://www.linkedin.com/in/anthony-michael-toni" target="_blank" rel="noopener noreferrer">Help</a>
           </div>
         </div>
+        {/* Show AdMob banner only on native platforms */}
+        {Capacitor.getPlatform() !== 'web' && (
+          <BannerAd adUnitId="ca-app-pub-8025011479298297/1682483809" />
+        )}
       </footer>
     </div>
   );

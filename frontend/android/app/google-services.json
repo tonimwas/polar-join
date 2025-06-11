@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "38762745157",
+    "project_id": "polar-and-join",
+    "storage_bucket": "polar-and-join.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:38762745157:android:038c3bdf18657e8776422c",
+        "android_client_info": {
+          "package_name": "com.polarjoin.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVsd2r09WdySvBuDU93YxHxLZU4wOwHYY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
