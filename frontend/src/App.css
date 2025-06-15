@@ -495,7 +495,10 @@ width: 100%;
 /* Saved points */
 .saved-points-section {
   width: 100%;
-  flex-shrink: 0;
+  flex: 1 1 auto;
+  color: #333;
+  overflow-y: auto;
+  background-color: #a59b9b;
 }
 
 .saved-points-header-row {
@@ -505,11 +508,26 @@ width: 100%;
   padding: 0.5px;
   width: 100%;
   font-size: 11px;
+  position: sticky;
+  top: 0;
+  background: #f3f4f6;
+  z-index: 2;
 }
 
-.saved-points-title {
-  font-weight: bold;
-  font-size: 11px;
+.saved-points-header {
+  background: #a59b9b;
+  position: sticky;
+  top: 24px; /* sits just below header row */
+  z-index: 1;
+}
+
+.saved-points-wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
 }
 
 .saved-points-table {
@@ -517,23 +535,56 @@ width: 100%;
   font-size: 10px;
   border-collapse: collapse;
   table-layout: fixed;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.saved-points-header {
-  background: darkgray;
-}
-
-.saved-points-cell {
-  border: 1px solid darkgray;
-  padding: 2px;
-  color: black;
+.saved-points-table thead {
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .saved-points-tbody {
-  display: block;
-  max-height: 90px;
+  flex: 1;
   overflow-y: auto;
+  display: block;
   width: 100%;
+  color: black;
+  background-color: #ffffff;
+  margin: 1px;
+  display: block;
+}
+
+.tbody{
+  display: flex;
+}f
+.saved-points-row {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+
+.saved-points-table thead {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.saved-points-table thead th {
+  position: sticky;
+  top: 0;
+}
+
+.saved-points-cell {
+  color: black;
+  border:1px solid #a59b9b;
+  border-collapse: collapse;
+  padding-left: 0px;
+  text-align: center;
+  
+
 }
 
 .saved-points-row {
@@ -675,7 +726,7 @@ width: 100%;
   display: flex;
   flex-grow: 1;
   flex-direction: column;
-  overflow-y: auto;
+  overflow-y: hidden;
   min-height: 0px;
   margin: 3px;
   border-bottom-left-radius: 10px;
@@ -716,6 +767,9 @@ width: 100%;
 }
 
 .app-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   background-color: #FF69B4;
   padding: 10px 0;
   margin-top: auto;

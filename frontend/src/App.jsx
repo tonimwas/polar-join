@@ -316,7 +316,7 @@ function App() {
       }
       return;
     }
-    setSavedPoints([...savedPoints, pt]);
+    setSavedPoints([pt, ...savedPoints]);
     setSavedStatus((prev) => ({ ...prev, [pointKey]: true }));
     setEndpointNameError(false);
     setError(null);
@@ -500,7 +500,7 @@ function App() {
     const newCount = calculationCount + 1;
     setCalculationCount(newCount);
 
-    if (newCount > 0 && newCount % 5 === 0) {
+    if (newCount > 0 && newCount % 7 === 0) {
       try {
         await AdMob.showInterstitial();
       } catch (adError) {
@@ -1238,18 +1238,20 @@ function App() {
                   Download CSV
                 </button>
               </div>
-              <table className="saved-points-table">
-                <thead>
-                  <tr className="saved-points-header">
-                    <th className="saved-points-cell">Point</th>
-                    <th className="saved-points-cell">Easting (X)</th>
-                    <th className="saved-points-cell">Northing (Y)</th>
-                    <th className="saved-points-cell"></th>
+              <div className="saved-points-wrapper">
+                <table className="saved-points-table">
+                  <thead>
+                    <tr className="saved-points-header">
+                      <th className="saved-points-cell">Point</th>
+                      <th className="saved-points-cell">Easting (X)</th>
+                      <th className="saved-points-cell">Northing (Y)</th>
+                      <th className="saved-points-cell">Del</th>
                   </tr>
                 </thead>
-                <tbody>
+                <div className="tbody">
+                <tbody className="saved-points-tbody">
                   {savedPoints.map((pt, idx) => (
-                    <tr key={idx}>
+                    <tr key={idx} className="saved-points-row">
                       <td className="saved-points-cell">{pt.name || 'Unnamed'}</td>
                       <td className="saved-points-cell">{(typeof precision === 'number' && precision !== '' && !isNaN(precision)) ? Number(pt.e).toFixed(precision) : pt.e}</td>
                       <td className="saved-points-cell">{(typeof precision === 'number' && precision !== '' && !isNaN(precision)) ? Number(pt.n).toFixed(precision) : pt.n}</td>
@@ -1265,7 +1267,9 @@ function App() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </div>
+                </table>
+               </div>
             </div>
           )}
 
