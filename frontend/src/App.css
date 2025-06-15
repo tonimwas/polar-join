@@ -498,7 +498,7 @@ width: 100%;
   flex: 1 1 auto;
   color: #333;
   overflow-y: auto;
-  background-color: #a59b9b;
+  background-color: #f3f4f6;
 }
 
 .saved-points-header-row {
@@ -583,6 +583,7 @@ width: 100%;
   border-collapse: collapse;
   padding-left: 0px;
   text-align: center;
+  overflow-x: auto;
   
 
 }
