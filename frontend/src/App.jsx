@@ -305,7 +305,7 @@ function App() {
   };
 
   // Save individual point handler (prevent duplicate coordinates)
-  const handleSavePoint = (name, e, n, pointKey) => {
+  const handleSavePoint = async (name, e, n, pointKey) => {
     const pt = { name: name.trim(), e, n };
     // Prevent empty point name for endpoint: set error state for input, not global error
     if (pointKey === 'polarEnd' && !pt.name) {
@@ -353,6 +353,27 @@ function App() {
     setSavedStatus((prev) => ({ ...prev, [pointKey]: true }));
     setEndpointNameError(false);
     setError(null);
+
+    // Increment calculation count and show ad for save operations
+    const newCount = calculationCount + 1;
+    setCalculationCount(newCount);
+    if (newCount === 2 || newCount % 5 === 0) {
+      try {
+        await AdMob.showInterstitial();
+      } catch (adError) {
+        console.error('Error showing interstitial ad:', adError);
+      } finally {
+        // Prepare the next ad regardless of whether the current one showed
+        try {
+          await AdMob.prepareInterstitial({
+            adId: 'ca-app-pub-8025011479298297/5107557644',
+            isTesting: false,
+          });
+        } catch (prepareError) {
+          console.error('Error preparing subsequent interstitial ad:', prepareError);
+        }
+      }
+    }
   };
 
   // CSV download helper
@@ -518,7 +539,8 @@ function App() {
     const newCount = calculationCount + 1;
     setCalculationCount(newCount);
 
-    if (newCount > 0 && newCount % 7 === 0) {
+    // Show ad after second calculate press and then every 5 presses
+    if (newCount === 2 || newCount % 5 === 0) {
       try {
         await AdMob.showInterstitial();
       } catch (adError) {
@@ -799,14 +821,14 @@ function App() {
                           <div className="result-section">
                             <h4>Results:</h4>
                             <h4>Change in Eastings and Northings</h4>
-                            <p><strong>ΔE :</strong> {Number(result.delta_e).toFixed(precision)} m</p>
-                            <p><strong>ΔN :</strong> {Number(result.delta_n).toFixed(precision)} m</p>
+                            <p><strong>ΔE :</strong> {Number(result.delta_e).toFixed(precision)} </p>
+                            <p><strong>ΔN :</strong> {Number(result.delta_n).toFixed(precision)} </p>
                           </div>
                         )}
 
                         <div className="result-section">
 
-                          <div className='dist'><h4>Distance:</h4> <p>{Number(result.distance).toFixed(precision)} m</p></div>
+                          <div className='dist'><h4>Distance:</h4> <p>{Number(result.distance).toFixed(precision)} </p></div>
                         </div>
 
                         {(usingServer || form.type === 'join') && result.azimuth !== undefined && (
