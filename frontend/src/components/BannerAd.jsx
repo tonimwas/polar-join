@@ -2,9 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { AdMob, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 import { Capacitor } from '@capacitor/core';
 
-const BannerAd = ({ adUnitId }) => {
+const BannerAd = () => {
   const [visible, setVisible] = useState(true);
   const timerRef = useRef(null);
+
   useEffect(() => {
     if (Capacitor.getPlatform() === 'web' || !visible) {
       return; // AdMob does not work on web or banner hidden
@@ -13,11 +14,11 @@ const BannerAd = ({ adUnitId }) => {
     const showBanner = async () => {
       try {
         const options = {
-          adId: adUnitId,
+          adId: 'ca-app-pub-8025011479298297/1682483809', // Production banner ad unit ID
           adSize: BannerAdSize.ADAPTIVE_BANNER,
           position: BannerAdPosition.BOTTOM_CENTER,
           margin: 0,
-          isTesting: true, // IMPORTANT: Set to false for production
+          isTesting: false, // IMPORTANT: Set to false for production
         };
         await AdMob.showBanner(options);
       } catch (error) {
@@ -28,11 +29,10 @@ const BannerAd = ({ adUnitId }) => {
     // Initialize and show banner
     AdMob.initialize({
       requestTrackingAuthorization: true,
-      initializeForTesting: true, // IMPORTANT: Set to false for production
+      initializeForTesting: false, // IMPORTANT: Set to false for production
     }).then(() => {
       showBanner();
     }).catch(err => console.error("Error initializing AdMob", err));
-
 
     return () => {
       // Keep any pending timer so the banner can reshow automatically
@@ -40,7 +40,7 @@ const BannerAd = ({ adUnitId }) => {
         AdMob.hideBanner().catch(() => {});
       }
     };
-  }, [adUnitId, visible]);
+  }, [visible]);
 
   if (!visible || Capacitor.getPlatform() === 'web') return null;
 

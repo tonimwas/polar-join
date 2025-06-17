@@ -17,13 +17,13 @@ const bannerConfig = {
   adId: 'ca-app-pub-3940256099942544/6300978111', // Replace with your actual ad unit ID
   position: 'BOTTOM_CENTER',
   margin: 0,
-  isTesting: true, // Set to false in production
+  isTesting: false, // Set to false in production
 };
 
 // Interstitial ad configuration
 const interstitialConfig = {
   adId: 'ca-app-pub-3940256099942544/1033173712', // Replace with your actual ad unit ID
-  isTesting: true, // Set to false in production
+  isTesting: false, // Set to false in production
 };
 
 // Show banner ad

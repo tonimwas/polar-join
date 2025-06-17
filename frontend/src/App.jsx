@@ -114,6 +114,24 @@ function App() {
     return savedCount ? parseInt(savedCount, 10) : 0;
   });
 
+  // Add new state to track if inputs have changed since last calculation
+  const [inputsChanged, setInputsChanged] = useState(false);
+
+  // Add state for popup alert
+  const [alertMessage, setAlertMessage] = useState(null);
+  const alertTimeoutRef = useRef(null);
+
+  // Function to show temporary alert
+  const showAlert = (message) => {
+    setAlertMessage(message);
+    if (alertTimeoutRef.current) {
+      clearTimeout(alertTimeoutRef.current);
+    }
+    alertTimeoutRef.current = setTimeout(() => {
+      setAlertMessage(null);
+    }, 5000);
+  };
+
   // Prepare interstitial ad on component mount
   useEffect(() => {
     if (Capacitor.getPlatform() === 'web') return;
@@ -122,7 +140,7 @@ function App() {
       try {
         await AdMob.prepareInterstitial({
           adId: 'ca-app-pub-8025011479298297/5107557644',
-          isTesting: true, // IMPORTANT: Set to false for production
+          isTesting: false, // IMPORTANT: Set to false for production
         });
       } catch (error) {
         console.error('Error preparing interstitial ad:', error);
@@ -132,7 +150,7 @@ function App() {
     // Initialize AdMob if not already done
     AdMob.initialize({
       requestTrackingAuthorization: true,
-      initializeForTesting: true,
+      initializeForTesting: false,
     }).then(() => {
       prepareAd();
     }).catch(err => console.error("Error initializing AdMob for interstitial", err));
@@ -146,74 +164,77 @@ function App() {
   // Effect to update endpoint coordinates and endpoint save/tick logic
   useEffect(() => {
     if (form.type === 'polar' && form.distance) {
+      // Set inputsChanged to true when any relevant input changes
+      setInputsChanged(true);
+      
       // Always recalculate endpoint from current inputs
       let delta_e = 0, delta_n = 0;
-      if (result && typeof result.delta_e !== 'undefined' && typeof result.delta_n !== 'undefined') {
-        delta_e = result.delta_e;
-        delta_n = result.delta_n;
-      } else {
-        let angleRad = 0;
-        if (form.useAzimuth && form.degrees !== '' && form.minutes !== '' && form.seconds !== '') {
-          const decimalDegrees = parseFloat(form.degrees || 0) + parseFloat(form.minutes || 0) / 60 + parseFloat(form.seconds || 0) / 3600;
-          angleRad = ((90 - decimalDegrees) * Math.PI) / 180;
-          if (angleRad < 0) angleRad += 2 * Math.PI;
-        } else if (!form.useAzimuth && form.angle !== '') {
-          angleRad = parseFloat(form.angle || 0) * Math.PI / 180;
-        }
-        const distance = parseFloat(form.distance || 0);
-        delta_e = distance * Math.cos(angleRad);
-        delta_n = distance * Math.sin(angleRad);
+      
+      // Calculate angle in radians
+      let angleRad = 0;
+      if (form.useAzimuth && form.degrees !== '' && form.minutes !== '' && form.seconds !== '') {
+        const decimalDegrees = parseFloat(form.degrees || 0) + parseFloat(form.minutes || 0) / 60 + parseFloat(form.seconds || 0) / 3600;
+        angleRad = ((90 - decimalDegrees) * Math.PI) / 180;
+        if (angleRad < 0) angleRad += 2 * Math.PI;
+      } else if (!form.useAzimuth && form.angle !== '') {
+        angleRad = parseFloat(form.angle || 0) * Math.PI / 180;
       }
-      // Calculate endpoint coordinates with proper precision if starting point is provided
+
+      // Calculate delta coordinates
+      const distance = parseFloat(form.distance || 0);
+      delta_e = distance * Math.cos(angleRad);
+      delta_n = distance * Math.sin(angleRad);
+
+      // Calculate endpoint coordinates with proper precision
       let newEndE, newEndN;
       if (form.polarEa && form.polarNa) {
-        newEndE = (parseFloat(form.polarEa) + (delta_e || 0)).toFixed(precision);
-        newEndN = (parseFloat(form.polarNa) + (delta_n || 0)).toFixed(precision);
+        newEndE = (parseFloat(form.polarEa) + delta_e).toFixed(precision);
+        newEndN = (parseFloat(form.polarNa) + delta_n).toFixed(precision);
       } else {
-        // If no starting point, just show the delta values
-        newEndE = delta_e ? delta_e.toFixed(precision) : '0';
-        newEndN = delta_n ? delta_n.toFixed(precision) : '0';
+        newEndE = delta_e.toFixed(precision);
+        newEndN = delta_n.toFixed(precision);
       }
       setEndpointCoords({ e: newEndE, n: newEndN });
 
-      // Improved comparison to find matching saved point
-      // Convert both to the same precision and format for reliable comparison
+      // Find matching saved point with exact decimal place comparison
       const match = savedPoints.find(pt => {
-        const savedE = parseFloat(pt.e).toFixed(precision);
-        const savedN = parseFloat(pt.n).toFixed(precision);
+        const savedE = Number(pt.e).toFixed(precision);
+        const savedN = Number(pt.n).toFixed(precision);
         return savedE === newEndE && savedN === newEndN;
       });
 
+      // Clear the name and reset save status
+      setForm(f => ({ ...f, polarEndName: '' }));
+      setSavedStatus(prev => ({ ...prev, polarEnd: false }));
+
+      // Only set name and tick if we found a match
       if (match) {
-        // If coordinates match a saved point:
-        // 1. Always update the name to match the saved point
-        // 2. Always show the tick icon
         setForm(f => ({ ...f, polarEndName: match.name }));
         setSavedStatus(prev => ({ ...prev, polarEnd: true }));
-      } else {
-        // Only clear name if coordinates don't match any saved point
-        // and we previously had a saved status
-        if (savedStatus.polarEnd) {
-          setForm(f => ({ ...f, polarEndName: '' }));
-          setSavedStatus(prev => ({ ...prev, polarEnd: false }));
-        }
       }
     } else {
-      // Only clear name if we had a name and we're not in polar mode
-      if (form.polarEndName !== '' && savedStatus.polarEnd) {
-        setForm(f => ({ ...f, polarEndName: '' }));
-        setSavedStatus(prev => ({ ...prev, polarEnd: false }));
-      }
+      // Clear name and reset save status if not in polar mode
+      setForm(f => ({ ...f, polarEndName: '' }));
+      setSavedStatus(prev => ({ ...prev, polarEnd: false }));
     }
-  }, [form.type, form.polarEa, form.polarNa, form.distance, form.angle, form.degrees, form.minutes, form.seconds, form.useAzimuth, result, savedPoints]);
+  }, [
+    form.type,
+    form.polarEa,
+    form.polarNa,
+    form.distance,
+    form.angle,
+    form.degrees,
+    form.minutes,
+    form.seconds,
+    form.useAzimuth,
+    savedPoints,
+    precision
+  ]);
 
   // Effect to update startpoint save/tick logic in polar mode
   useEffect(() => {
     if (form.type === 'polar' && form.polarEa && form.polarNa) {
-      const match = savedPoints.find(pt =>
-        Number(pt.e).toFixed(3) === Number(form.polarEa).toFixed(3) &&
-        Number(pt.n).toFixed(3) === Number(form.polarNa).toFixed(3)
-      );
+      const match = savedPoints.find(pt => pt.e === form.polarEa && pt.n === form.polarNa);
       if (match) {
         if (form.polarNameA !== match.name || !savedStatus.polarA) {
           setForm(f => ({ ...f, polarNameA: match.name }));
@@ -239,10 +260,7 @@ function App() {
   useEffect(() => {
     // Handle Point A
     if (form.type === 'join' && form.ea && form.na) {
-      const match = savedPoints.find(pt =>
-        Number(pt.e).toFixed(3) === Number(form.ea).toFixed(3) &&
-        Number(pt.n).toFixed(3) === Number(form.na).toFixed(3)
-      );
+      const match = savedPoints.find(pt => pt.e === form.ea && pt.n === form.na);
       if (match) {
         if (form.nameA !== match.name || !savedStatus.A) {
           setForm(f => ({ ...f, nameA: match.name }));
@@ -259,10 +277,7 @@ function App() {
 
     // Handle Point B
     if (form.type === 'join' && form.eb && form.nb) {
-      const match = savedPoints.find(pt =>
-        Number(pt.e).toFixed(3) === Number(form.eb).toFixed(3) &&
-        Number(pt.n).toFixed(3) === Number(form.nb).toFixed(3)
-      );
+      const match = savedPoints.find(pt => pt.e === form.eb && pt.n === form.nb);
       if (match) {
         if (form.nameB !== match.name || !savedStatus.B) {
           setForm(f => ({ ...f, nameB: match.name }));
@@ -278,6 +293,17 @@ function App() {
     }
   }, [form.type, form.ea, form.na, form.eb, form.nb, savedPoints]);
 
+  // Helper to check for coordinate-only matches
+  const findCoordMatch = (pt) => {
+    for (const saved of savedPoints) {
+      // Compare exact string values to ensure decimal places match
+      if (saved.e === pt.e && saved.n === pt.n && saved.name !== pt.name) {
+        return saved;
+      }
+    }
+    return null;
+  };
+
   // Save individual point handler (prevent duplicate coordinates)
   const handleSavePoint = (name, e, n, pointKey) => {
     const pt = { name: name.trim(), e, n };
@@ -289,17 +315,24 @@ function App() {
     }
     // Prevent empty point name for other points (keep previous behavior)
     if (pointKey !== 'polarEnd' && !pt.name) {
-      setError('Error: Point name cannot be empty');
+      showAlert('Error: Point name cannot be empty');
       return;
     }
     // Check for name match
     if (savedPoints.some(saved => saved.name === pt.name)) {
-      setError(`Error: "${pt.name}" already exists`);
+      showAlert(`Error: "${pt.name}" already exists`);
       return;
     }
     // Prevent saving if coordinates already exist (even if name is different)
-    if (savedPoints.some(saved => Number(saved.e).toFixed(3) === Number(pt.e).toFixed(3) && Number(saved.n).toFixed(3) === Number(pt.n).toFixed(3))) {
-      setError('Error: A point with these coordinates already exists.');
+    const existingPoint = savedPoints.find(saved => {
+      const savedE = Number(saved.e).toFixed(precision);
+      const savedN = Number(saved.n).toFixed(precision);
+      const ptE = Number(pt.e).toFixed(precision);
+      const ptN = Number(pt.n).toFixed(precision);
+      return savedE === ptE && savedN === ptN;
+    });
+    if (existingPoint) {
+      showAlert(`Error: A point with these coordinates already exists: "${existingPoint.name}" (${Number(existingPoint.e).toFixed(precision)}, ${Number(existingPoint.n).toFixed(precision)})`);
       // Also set error state for the coordinate inputs
       if (pointKey === 'polarEnd') {
         setForm(f => ({
@@ -409,26 +442,6 @@ function App() {
     }
   };
 
-  // Helper to check for duplicate single points
-  const isDuplicatePoint = (pt) => {
-    return savedPoints.some(saved =>
-      saved.name === pt.name && saved.e === pt.e && saved.n === pt.n
-    );
-  };
-
-  // Helper to check for coordinate-only matches
-  const findCoordMatch = (pt) => {
-    for (const saved of savedPoints) {
-      if (
-        saved.e === pt.e && saved.n === pt.n &&
-        saved.name !== pt.name
-      ) {
-        return saved;
-      }
-    }
-    return null;
-  };
-
   // Delete point handler
   const handleDeletePoint = (idx) => {
     setSavedPoints(savedPoints.filter((_, i) => i !== idx));
@@ -437,6 +450,11 @@ function App() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     const newForm = { ...form, [name]: value };
+
+    // Set inputsChanged to true when relevant inputs change
+    if (['polarEa', 'polarNa', 'distance', 'angle', 'degrees', 'minutes', 'seconds'].includes(name)) {
+      setInputsChanged(true);
+    }
 
     // Check if coordinates match any saved point
     if (['ea', 'na', 'eb', 'nb'].includes(name)) {
@@ -510,7 +528,7 @@ function App() {
         try {
           await AdMob.prepareInterstitial({
             adId: 'ca-app-pub-8025011479298297/5107557644',
-            isTesting: true,
+            isTesting: false,
           });
         } catch (prepareError) {
           console.error('Error preparing subsequent interstitial ad:', prepareError);
@@ -522,6 +540,7 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setInputsChanged(false); // Reset the changed state after calculation
     setResult(null);
 
     // Start logo rotation
@@ -630,6 +649,30 @@ function App() {
       setIsLogoRotating(false);
     }
   };
+
+  // Update the select handler for starting point to set inputsChanged
+  const handleStartPointSelect = (e) => {
+    const idx = Number(e.target.value);
+    if (!isNaN(idx) && idx >= 0) {
+      const pt = savedPoints[idx];
+      setForm(f => ({ ...f, polarNameA: pt.name, polarEa: pt.e, polarNa: pt.n }));
+      setInputsChanged(true);
+      setError(null);
+    } else {
+      setForm(f => ({ ...f, polarNameA: '', polarEa: '', polarNa: '' }));
+      setInputsChanged(true);
+      setError(null);
+    }
+  };
+
+  // Add cleanup for alert timeout
+  useEffect(() => {
+    return () => {
+      if (alertTimeoutRef.current) {
+        clearTimeout(alertTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="app-container">
@@ -801,17 +844,7 @@ function App() {
                           <select
                             className="point-select"
                             value={savedPoints.findIndex(pt => pt.name === form.polarNameA)}
-                            onChange={e => {
-                              const idx = Number(e.target.value);
-                              if (!isNaN(idx) && idx >= 0) {
-                                const pt = savedPoints[idx];
-                                setForm(f => ({ ...f, polarNameA: pt.name, polarEa: pt.e, polarNa: pt.n }));
-                                setError(null);
-                              } else {
-                                setForm(f => ({ ...f, polarNameA: '', polarEa: '', polarNa: '' }));
-                                setError(null);
-                              }
-                            }}
+                            onChange={handleStartPointSelect}
                           >
                             <option value="-1">Select or enter manually</option>
                             {savedPoints.map((pt, idx) => (
@@ -824,7 +857,10 @@ function App() {
                           id="polarNameA"
                           name="polarNameA"
                           value={form.polarNameA}
-                          onChange={e => setForm(f => ({ ...f, polarNameA: e.target.value }))}
+                          onChange={e => {
+                            setForm(f => ({ ...f, polarNameA: e.target.value }));
+                            setInputsChanged(true);
+                          }}
                           placeholder="Name (optional)"
                           className="point-name-input"
                         />
@@ -845,7 +881,10 @@ function App() {
                         id="polarEa"
                         name="polarEa"
                         value={form.polarEa}
-                        onChange={e => setForm(f => ({ ...f, polarEa: e.target.value }))}
+                        onChange={e => {
+                          setForm(f => ({ ...f, polarEa: e.target.value }));
+                          setInputsChanged(true);
+                        }}
                         step="any"
                         placeholder="Starting E (X)"
                       />
@@ -857,7 +896,10 @@ function App() {
                         id="polarNa"
                         name="polarNa"
                         value={form.polarNa}
-                        onChange={e => setForm(f => ({ ...f, polarNa: e.target.value }))}
+                        onChange={e => {
+                          setForm(f => ({ ...f, polarNa: e.target.value }));
+                          setInputsChanged(true);
+                        }}
                         step="any"
                         placeholder="Starting N (Y)"
                       />
@@ -988,8 +1030,8 @@ function App() {
                 </div>
 
                 {/* Endpoint naming and saving UI for polar mode (moved below inputs container) */}
-                {form.type === 'polar' && form.polarEa && form.polarNa && result && (
-                  <div className="form-group join-pair" >
+                {form.type === 'polar' && form.polarEa && form.polarNa && result && !inputsChanged && (
+                  <div className="form-group join-pair">
                     <div className="points-flex-container">
                       <div>
                         <div className="points-flex-row">
@@ -1002,8 +1044,7 @@ function App() {
                           value={form.polarEndName || ''}
                           onChange={e => {
                             setForm(f => ({ ...f, polarEndName: e.target.value }));
-                            setEndpointNameError(false); // Clear error state when typing
-                            // Only reset saved status if name changes, not coordinates
+                            setEndpointNameError(false);
                             if (e.target.value !== '') {
                               setSavedStatus(prev => ({ ...prev, polarEnd: false }));
                             }
@@ -1275,13 +1316,39 @@ function App() {
 
         </div>
 
-        {error && (
-          <div className="error-box">
-            <p>Error: {error}</p>
+        {/* Replace error box with popup alert */}
+        {alertMessage && (
+          <div 
+            className="alert-popup"
+            style={{
+              position: 'fixed',
+              top: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: '#ff4444',
+              color: 'white',
+              padding: '10px 20px',
+              borderRadius: '5px',
+              zIndex: 10000,
+              boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+              animation: 'fadeInOut 5s ease-in-out'
+            }}
+          >
+            {alertMessage}
           </div>
         )}
 
-
+        {/* Add CSS animation */}
+        <style>
+          {`
+            @keyframes fadeInOut {
+              0% { opacity: 0; transform: translate(-50%, -20px); }
+              10% { opacity: 1; transform: translate(-50%, 0); }
+              90% { opacity: 1; transform: translate(-50%, 0); }
+              100% { opacity: 0; transform: translate(-50%, -20px); }
+            }
+          `}
+        </style>
       </div>
       <footer className="app-footer">
         <div className="footer-content">
@@ -1293,9 +1360,7 @@ function App() {
           </div>
         </div>
         {/* Show AdMob banner only on native platforms */}
-        {Capacitor.getPlatform() !== 'web' && (
-          <BannerAd adUnitId="ca-app-pub-8025011479298297/1682483809" />
-        )}
+        {Capacitor.getPlatform() !== 'web' && <BannerAd />}
       </footer>
     </div>
   );
