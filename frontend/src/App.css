@@ -279,6 +279,30 @@ select:focus {
   display: block;
 }
 
+/* Alert popup */
+.alert-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ff4444;
+  color: white;
+  padding: 15px 25px;
+  border-radius: 5px;
+  z-index: 10000;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  animation: fadeInOut 5s ease-in-out;
+  text-align: center;
+  min-width: 200px;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -40%); }
+  10% { opacity: 1; transform: translate(-50%, -50%); }
+  90% { opacity: 1; transform: translate(-50%, -50%); }
+  100% { opacity: 0; transform: translate(-50%, -60%); }
+}
+
 /* Form */
 .calculator-form {
   display: flex;

@@ -108,6 +108,7 @@ function App() {
   const [error, setError] = useState(null);
   const [savedStatus, setSavedStatus] = useState({ A: false, B: false, polarEnd: false }); // To track save icon state
   const [endpointCoords, setEndpointCoords] = useState({ e: null, n: null }); // Track endpoint coordinates
+  const [errorFields, setErrorFields] = useState({}); // Track which fields have errors
 
   const [calculationCount, setCalculationCount] = useState(() => {
     const savedCount = localStorage.getItem('calculationCount');
@@ -562,7 +563,8 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    setInputsChanged(false); // Reset the changed state after calculation
+    setErrorFields({}); // Clear error fields
+    setInputsChanged(false);
     setResult(null);
 
     // Start logo rotation
@@ -572,6 +574,7 @@ function App() {
     if (form.type === 'polar') {
       if (!form.distance) {
         setError('Please enter a distance');
+        setErrorFields({ distance: true });
         setIsLogoRotating(false);
         return;
       }
@@ -582,17 +585,25 @@ function App() {
           form.seconds === '' || form.seconds === null
         ) {
           setError('Please enter all DMS values (Degrees, Minutes, Seconds)');
+          setErrorFields({ degrees: true, minutes: true, seconds: true });
           setIsLogoRotating(false);
           return;
         }
       } else if (!form.angle) {
         setError('Please enter an angle from East');
+        setErrorFields({ angle: true });
         setIsLogoRotating(false);
         return;
       }
     } else if (form.type === 'join') {
       if (!form.ea || !form.na || !form.eb || !form.nb) {
         setError('Please enter all coordinate values for both points');
+        setErrorFields({
+          ea: !form.ea,
+          na: !form.na,
+          eb: !form.eb,
+          nb: !form.nb
+        });
         setIsLogoRotating(false);
         return;
       }
@@ -933,23 +944,11 @@ function App() {
                       type="number"
                       id="distance"
                       name="distance"
-                      value={form.distance < 0 ? 'error' : form.distance}
-                      onChange={e => {
-                        const val = e.target.value;
-                        if (Number(val) < 0) {
-                          setForm(f => ({ ...f, distance: val }));
-                          setError('Distance cannot be negative');
-                        } else {
-                          setForm(f => ({ ...f, distance: val }));
-                          if (error && error.toLowerCase().includes('distance')) setError(null);
-                        }
-                      }}
+                      value={form.distance}
+                      onChange={handleChange}
                       step="any"
-                      min="0"
-                      required
-                      className={form.distance < 0 ? 'input-error' : ''}
-                      placeholder={form.distance < 0 ? 'error' : ''}
-                      inputMode="decimal"
+                      className={errorFields.distance ? 'input-error' : ''}
+                      placeholder="Distance"
                     />
                   </div>
 
@@ -998,6 +997,7 @@ function App() {
                               max="359"
                               step="1"
                               required={form.useAzimuth}
+                              className={errorFields.degrees ? 'input-error' : ''}
                             />
                             <span>°</span>
                           </div>
@@ -1012,6 +1012,7 @@ function App() {
                               max="59"
                               step="1"
                               required={form.useAzimuth}
+                              className={errorFields.minutes ? 'input-error' : ''}
                             />
                             <span>'</span>
                           </div>
@@ -1026,6 +1027,7 @@ function App() {
                               max="59.999"
                               step="0.001"
                               required={form.useAzimuth}
+                              className={errorFields.seconds ? 'input-error' : ''}
                             />
                             <span>"</span>
                           </div>
@@ -1042,6 +1044,7 @@ function App() {
                           onChange={handleChange}
                           step="0.001"
                           required
+                          className={errorFields.angle ? 'input-error' : ''}
                         />
                       </div>
                     )}
@@ -1182,6 +1185,7 @@ function App() {
                       value={form.ea}
                       onChange={handleChange}
                       step="any"
+                      className={errorFields.ea ? 'input-error' : ''}
                       required
                     />
                   </div>
@@ -1194,6 +1198,7 @@ function App() {
                       value={form.na}
                       onChange={handleChange}
                       step="any"
+                      className={errorFields.na ? 'input-error' : ''}
                       required
                     />
                   </div>
@@ -1257,6 +1262,7 @@ function App() {
                       value={form.eb}
                       onChange={handleChange}
                       step="any"
+                      className={errorFields.eb ? 'input-error' : ''}
                       required
                     />
                   </div>
@@ -1269,6 +1275,7 @@ function App() {
                       value={form.nb}
                       onChange={handleChange}
                       step="any"
+                      className={errorFields.nb ? 'input-error' : ''}
                       required
                     />
                   </div>
@@ -1344,16 +1351,18 @@ function App() {
             className="alert-popup"
             style={{
               position: 'fixed',
-              top: '20px',
+              top: '50%',
               left: '50%',
-              transform: 'translateX(-50%)',
+              transform: 'translate(-50%, -50%)',
               backgroundColor: '#ff4444',
               color: 'white',
-              padding: '10px 20px',
+              padding: '15px 25px',
               borderRadius: '5px',
               zIndex: 10000,
-              boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-              animation: 'fadeInOut 5s ease-in-out'
+              boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+              animation: 'fadeInOut 5s ease-in-out',
+              textAlign: 'center',
+              minWidth: '200px'
             }}
           >
             {alertMessage}
